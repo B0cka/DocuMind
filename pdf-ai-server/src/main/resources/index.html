@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuMind - PDF Upload</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .upload-area {
+            border: 3px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .progress {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: #4CAF50;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .status {
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .success {
+            color: #4CAF50;
+        }
+
+        .error {
+            color: #f44336;
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📄 DocuMind</h1>
+
+    <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📤</div>
+        <h2>Перетащите PDF файл сюда</h2>
+        <p>или</p>
+        <input type="file" id="fileInput" class="file-input" accept=".pdf">
+        <button class="btn" onclick="document.getElementById('fileInput').click()">
+            Выберите файл
+        </button>
+    </div>
+
+    <div class="progress" id="progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <div class="file-info" id="fileInfo" style="display: none;"></div>
+
+    <button class="btn" id="uploadBtn" onclick="uploadFile()" disabled>
+        Загрузить PDF
+    </button>
+</div>
+
+<script>
+    let selectedFile = null;
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const progress = document.getElementById('progress');
+    const progressBar = document.getElementById('progressBar');
+    const status = document.getElementById('status');
+    const fileInfo = document.getElementById('fileInfo');
+
+    // Обработка drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
+
+    // Обработка выбора файла через кнопку
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+
+    function handleFileSelect(file) {
+        if (file.type !== 'application/pdf') {
+            showStatus('Пожалуйста, выберите PDF файл', 'error');
+            return;
+        }
+
+        selectedFile = file;
+        uploadBtn.disabled = false;
+
+        // Показываем информацию о файле
+        fileInfo.style.display = 'block';
+        fileInfo.innerHTML = `
+            <strong>Файл:</strong> ${file.name}<br>
+            <strong>Размер:</strong> ${formatFileSize(file.size)}<br>
+            <strong>Тип:</strong> ${file.type}
+        `;
+
+        showStatus('Файл готов к загрузке', 'success');
+    }
+
+    function uploadFile() {
+        if (!selectedFile) return;
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        // Показываем прогресс
+        progress.style.display = 'block';
+        status.textContent = 'Загрузка...';
+        status.className = 'status';
+
+        fetch('http://localhost:8080/load-pdf', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка сервера');
+            }
+            return response.text();
+        })
+        .then(data => {
+            progressBar.style.width = '100%';
+            showStatus('Файл успешно загружен и обработан!', 'success');
+            setTimeout(() => {
+                resetForm();
+            }, 2000);
+        })
+        .catch(error => {
+            showStatus('Ошибка загрузки: ' + error.message, 'error');
+            progressBar.style.width = '0%';
+        });
+    }
+
+    function showStatus(message, type) {
+        status.textContent = message;
+        status.className = `status ${type}`;
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function resetForm() {
+        selectedFile = null;
+        uploadBtn.disabled = true;
+        progress.style.display = 'none';
+        progressBar.style.width = '0%';
+        fileInfo.style.display = 'none';
+        fileInfo.innerHTML = '';
+        fileInput.value = '';
+        status.textContent = '';
+    }
+</script>
+</body>
+</html>
