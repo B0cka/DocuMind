@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,21 +40,30 @@ public class WebServiceImpl implements WebService {
                     Map<String, String> requestBody = new HashMap<>();
                     requestBody.put("text", chunk);
 
-                    VectorResponse vectorResponse = restTemplate.postForObject(
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> response = restTemplate.postForObject(
                             "http://localhost:8000/vectorize",
                             requestBody,
-                            VectorResponse.class
+                            Map.class
                     );
-                        log.info("чанки: {}", vectorResponse.getVectors());
-                    if (vectorResponse != null && vectorResponse.getVectors() != null) {
+
+                    if (response != null && response.containsKey("vector")) {
+                        List<Double> vectorList = (List<Double>) response.get("vector");
+                        float[] vectorArray = new float[vectorList.size()];
+                        for (int i = 0; i < vectorList.size(); i++) {
+                            vectorArray[i] = vectorList.get(i).floatValue();
+                        }
+
+                        log.info("Размер вектора: {}", vectorArray.length);
+                        log.info("Вектор: {}", vectorArray);
+
                         Vectors vectors = Vectors.builder()
-                                .vectors(vectorResponse.getVectors())
+                                .vector(vectorArray)
                                 .build();
 
                         webRepository.save(vectors);
-                        log.info("Сохранен вектор размером: {}", vectorResponse.getVectors().length);
+                        log.info("Сохранен вектор размером: {}", vectorArray.length);
                     }
-
                 } catch (Exception e) {
                     log.error("Ошибка при отправке чанка на сервер: {}", e.getMessage());
                 }

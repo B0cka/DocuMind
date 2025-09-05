@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class VectorResponse {
 
-    private final float[] vectors;
+    private final float[] vector;
 
 }

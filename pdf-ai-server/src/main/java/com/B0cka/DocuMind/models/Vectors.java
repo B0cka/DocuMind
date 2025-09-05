@@ -24,6 +24,6 @@ public class Vectors {
 
     @Column
     @JdbcTypeCode(SqlTypes.VECTOR)
-    private float[] vectors;
+    private float[] vector;
 
 }
