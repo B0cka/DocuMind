@@ -21,14 +21,12 @@ public class WebServiceImpl implements WebService {
         try (PDDocument document = PDDocument.load(multipartFile.getInputStream())) {
             PDFTextStripper stripper = new PDFTextStripper();
 
-            // Извлекаем текст из документа в память
             String extractedText = stripper.getText(document);
 
-            // Возвращаем извлеченный текст
             System.out.println(extractedText);
 
         } catch (IOException e) {
-            // Перехватываем исключение и выбрасываем свое (unchecked) для удобства
+
             throw new RuntimeException("Failed to parse PDF file: " + e.getMessage(), e);
         }
     }
