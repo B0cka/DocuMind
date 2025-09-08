@@ -9,3 +9,9 @@ services:
       POSTGRES_DB: vectordb
     ports:
       - "5433:5432"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data  # Том для данных БД (ОБЯЗАТЕЛЬНО!)
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d  # Для init скриптов
+
+volumes:
+  pgvector_data:  # Объявляем том для данных

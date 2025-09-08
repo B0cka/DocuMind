@@ -6,4 +6,6 @@ public interface WebService {
 
     void loadPDF(MultipartFile file);
 
+    String search(String question);
+
 }
