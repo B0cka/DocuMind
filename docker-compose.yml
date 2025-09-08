@@ -14,4 +14,4 @@ services:
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d  # Для init скриптов
 
 volumes:
-  pgvector_data:  # Объявляем том для данных
+  pgvector_data:

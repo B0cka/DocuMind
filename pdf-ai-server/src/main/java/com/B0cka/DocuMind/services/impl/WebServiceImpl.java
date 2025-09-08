@@ -131,6 +131,7 @@ public class WebServiceImpl implements WebService {
             log.info("Отправляем запрос к LLM с контекстом из {} чанков", relevantChunks);
 
             OllamaResponse ollamaResponse = restTemplate.postForObject(URI.create("http://localhost:11434/api/generate"), OllamaRequest.builder().model("llama3:8b").prompt(prompt).stream(false).build(), OllamaResponse.class);
+            log.info("Ответ LLM: {}", ollamaResponse.getResponse());
             return ollamaResponse.getResponse();
 
         } catch (Exception e) {

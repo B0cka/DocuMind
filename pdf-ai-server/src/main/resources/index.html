@@ -3,263 +3,540 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DocuMind - PDF Upload</title>
+    <title>DocuMind - Обработка документов</title>
     <style>
-        body {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            background-color: #EFEDE3;
+            color: #302F2C;
             min-height: 100vh;
-            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 700px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+            padding: 35px;
+            text-align: center;
         }
 
         h1 {
-            text-align: center;
             margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-weight: 600;
+            color: #302F2C;
+            font-size: 28px;
         }
 
+        /* Первая плашка - загрузка файла */
         .upload-area {
-            border: 3px dashed rgba(255, 255, 255, 0.4);
-            border-radius: 10px;
-            padding: 40px;
-            text-align: center;
+            border: 2px dashed #302F2C;
+            border-radius: 12px;
+            padding: 45px 25px;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            background: rgba(239, 237, 227, 0.2);
         }
 
         .upload-area:hover {
-            border-color: rgba(255, 255, 255, 0.8);
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .upload-area.dragover {
-            border-color: #4CAF50;
-            background: rgba(76, 175, 80, 0.1);
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .btn {
-            background: #4CAF50;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-        }
-
-        .btn:hover {
-            background: #45a049;
+            background-color: rgba(239, 237, 227, 0.4);
             transform: translateY(-2px);
         }
 
-        .btn:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
+        .upload-area i {
+            font-size: 52px;
+            margin-bottom: 18px;
+            color: #302F2C;
         }
 
-        .progress {
+        .upload-area p {
+            margin: 12px 0;
+            color: #302F2C;
+            font-size: 16px;
+        }
+
+        .upload-area .small {
+            font-size: 14px;
+            color: #6B6A67;
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
             width: 100%;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            margin: 20px 0;
-            overflow: hidden;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Анимация загрузки */
+        .loading-container {
             display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 35px 0;
         }
 
-        .progress-bar {
-            height: 20px;
-            background: #4CAF50;
-            width: 0%;
-            transition: width 0.3s ease;
+        .spinner {
+            width: 55px;
+            height: 55px;
+            border: 5px solid rgba(48, 47, 44, 0.2);
+            border-radius: 50%;
+            border-top-color: #302F2C;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 22px;
         }
 
-        .status {
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Информация о файле */
+        .file-info {
+            display: none;
+            background-color: rgba(239, 237, 227, 0.3);
+            padding: 18px;
+            border-radius: 12px;
+            margin-top: 25px;
+            text-align: left;
+            position: relative;
+            border: 1px solid #E5E3DC;
+        }
+
+        .file-name {
+            font-weight: 500;
+            margin-right: 40px;
+            word-break: break-all;
+            color: #302F2C;
+            font-size: 16px;
+        }
+
+        .remove-file {
+            position: absolute;
+            right: 18px;
+            top: 18px;
+            background: none;
+            border: none;
+            color: #ff4d4d;
+            cursor: pointer;
+            font-size: 20px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .remove-file:hover {
+            background-color: rgba(255, 77, 77, 0.1);
+        }
+
+        /* Вторая плашка - поиск */
+        .search-section {
+            display: none;
+            width: 100%;
+            margin-top: 25px;
+            background: rgba(239, 237, 227, 0.3);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #E5E3DC;
+        }
+
+        .search-input-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #302F2C;
+            border-radius: 25px;
+            font-size: 16px;
+            background-color: white;
+            outline: none;
+            transition: border-color 0.3s;
+            padding-right: 120px;
+        }
+
+        .search-input:focus {
+            border-color: #4a4946;
+            box-shadow: 0 0 0 3px rgba(48, 47, 44, 0.1);
+        }
+
+        .search-button {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #302F2C;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .search-button:hover {
+            background-color: #4a4946;
+        }
+
+        /* Результаты */
+        .results-container {
+            display: none;
+            margin-top: 25px;
+            text-align: left;
+            background-color: rgba(239, 237, 227, 0.3);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #E5E3DC;
+        }
+
+        .results-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #302F2C;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #302F2C;
+        }
+
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .result-text {
+            color: #302F2C;
+            line-height: 1.5;
+            font-size: 15px;
+        }
+
+        .message {
+            margin-top: 15px;
+            font-weight: 500;
+            color: #302F2C;
+            font-size: 14px;
             text-align: center;
-            margin: 10px 0;
-            font-weight: bold;
         }
 
         .success {
-            color: #4CAF50;
+            color: #2ecc71;
         }
 
         .error {
-            color: #f44336;
+            color: #e74c3c;
         }
 
-        .file-info {
+        .debug-info {
+            display: none;
             margin-top: 15px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #6c757d;
+            font-size: 13px;
+            color: #6c757d;
+            text-align: left;
+        }
+
+        button {
+            background-color: #302F2C;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background-color: #4a4946;
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>📄 DocuMind</h1>
+    <h1>DocuMind</h1>
 
+    <!-- Первая плашка - загрузка файла -->
     <div class="upload-area" id="uploadArea">
-        <div class="upload-icon">📤</div>
-        <h2>Перетащите PDF файл сюда</h2>
-        <p>или</p>
-        <input type="file" id="fileInput" class="file-input" accept=".pdf">
-        <button class="btn" onclick="document.getElementById('fileInput').click()">
-            Выберите файл
-        </button>
+        <i>📄</i>
+        <p>Перетащите PDF-файл сюда или нажмите для выбора</p>
+        <p class="small">Поддерживаемый формат: PDF</p>
+        <input type="file" id="fileInput" accept=".pdf">
     </div>
 
-    <div class="progress" id="progress">
-        <div class="progress-bar" id="progressBar"></div>
+    <!-- Анимация загрузки -->
+    <div class="loading-container" id="loadingContainer">
+        <div class="spinner"></div>
+        <p id="loadingText">Обработка файла...</p>
     </div>
 
-    <div class="status" id="status"></div>
+    <!-- Информация о загруженном файле -->
+    <div class="file-info" id="fileInfo">
+        <span class="file-name" id="fileName"></span>
+        <button class="remove-file" id="removeFile">×</button>
+    </div>
 
-    <div class="file-info" id="fileInfo" style="display: none;"></div>
+    <div id="message" class="message"></div>
 
-    <button class="btn" id="uploadBtn" onclick="uploadFile()" disabled>
-        Загрузить PDF
-    </button>
+    <!-- Вторая плашка - поиск -->
+    <div class="search-section" id="searchSection">
+        <div class="search-input-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="Введите ваш вопрос...">
+            <button class="search-button" id="searchButton">Найти</button>
+        </div>
+    </div>
+
+    <!-- Результаты поиска -->
+    <div class="results-container" id="resultsContainer">
+        <div class="results-header">Результаты поиска</div>
+        <div id="searchResults"></div>
+    </div>
+
+    <!-- Отладочная информация -->
+    <div class="debug-info" id="debugInfo">
+        <strong>Отладочная информация:</strong>
+        <div id="debugContent"></div>
+    </div>
 </div>
 
 <script>
-    let selectedFile = null;
-    const uploadArea = document.getElementById('uploadArea');
-    const fileInput = document.getElementById('fileInput');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const progress = document.getElementById('progress');
-    const progressBar = document.getElementById('progressBar');
-    const status = document.getElementById('status');
-    const fileInfo = document.getElementById('fileInfo');
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const loadingContainer = document.getElementById('loadingContainer');
+        const loadingText = document.getElementById('loadingText');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const removeFile = document.getElementById('removeFile');
+        const searchSection = document.getElementById('searchSection');
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const searchResults = document.getElementById('searchResults');
+        const message = document.getElementById('message');
+        const debugInfo = document.getElementById('debugInfo');
+        const debugContent = document.getElementById('debugContent');
 
-    // Обработка drag and drop
-    uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('dragover');
-    });
+        let currentFile = null;
 
-    uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('dragover');
-    });
-
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            handleFileSelect(files[0]);
-        }
-    });
-
-    // Обработка выбора файла через кнопку
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            handleFileSelect(e.target.files[0]);
-        }
-    });
-
-    function handleFileSelect(file) {
-        if (file.type !== 'application/pdf') {
-            showStatus('Пожалуйста, выберите PDF файл', 'error');
-            return;
-        }
-
-        selectedFile = file;
-        uploadBtn.disabled = false;
-
-        // Показываем информацию о файле
-        fileInfo.style.display = 'block';
-        fileInfo.innerHTML = `
-            <strong>Файл:</strong> ${file.name}<br>
-            <strong>Размер:</strong> ${formatFileSize(file.size)}<br>
-            <strong>Тип:</strong> ${file.type}
-        `;
-
-        showStatus('Файл готов к загрузке', 'success');
-    }
-
-    function uploadFile() {
-        if (!selectedFile) return;
-
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-
-        // Показываем прогресс
-        progress.style.display = 'block';
-        status.textContent = 'Загрузка...';
-        status.className = 'status';
-
-        fetch('http://localhost:8080/load-pdf', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Ошибка сервера');
+        // Обработка выбора файла
+        fileInput.addEventListener('change', function(e) {
+            if (this.files && this.files.length > 0) {
+                handleFileUpload(this.files[0]);
             }
-            return response.text();
-        })
-        .then(data => {
-            progressBar.style.width = '100%';
-            showStatus('Файл успешно загружен и обработан!', 'success');
-            setTimeout(() => {
-                resetForm();
-            }, 2000);
-        })
-        .catch(error => {
-            showStatus('Ошибка загрузки: ' + error.message, 'error');
-            progressBar.style.width = '0%';
         });
-    }
 
-    function showStatus(message, type) {
-        status.textContent = message;
-        status.className = `status ${type}`;
-    }
+        // Drag and drop
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.style.backgroundColor = 'rgba(239, 237, 227, 0.4)';
+        });
 
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.style.backgroundColor = 'rgba(239, 237, 227, 0.2)';
+        });
 
-    function resetForm() {
-        selectedFile = null;
-        uploadBtn.disabled = true;
-        progress.style.display = 'none';
-        progressBar.style.width = '0%';
-        fileInfo.style.display = 'none';
-        fileInfo.innerHTML = '';
-        fileInput.value = '';
-        status.textContent = '';
-    }
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.style.backgroundColor = 'rgba(239, 237, 227, 0.2)';
+
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFileUpload(e.dataTransfer.files[0]);
+            }
+        });
+
+        // Удаление файла
+        removeFile.addEventListener('click', function() {
+            resetFileUpload();
+        });
+
+        // Поиск
+        searchButton.addEventListener('click', function() {
+            performSearch();
+        });
+
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // Загрузка файла
+        function handleFileUpload(file) {
+            if (file.type !== 'application/pdf') {
+                alert('Пожалуйста, выберите PDF-файл');
+                return;
+            }
+
+            currentFile = file;
+            fileName.textContent = file.name;
+
+            uploadArea.style.display = 'none';
+            loadingContainer.style.display = 'flex';
+            loadingText.textContent = 'Отправка файла на сервер...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('http://localhost:8080/load-pdf', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(data => {
+                loadingContainer.style.display = 'none';
+                fileInfo.style.display = 'block';
+                searchSection.style.display = 'block';
+                message.textContent = 'Файл успешно загружен! Можете задавать вопросы.';
+                message.className = 'message success';
+
+                console.log('Файл отправлен:', data);
+            })
+            .catch(error => {
+                loadingContainer.style.display = 'none';
+                fileInfo.style.display = 'block';
+                searchSection.style.display = 'block';
+                message.textContent = 'Файл отправлен на обработку!';
+                message.className = 'message';
+
+                console.log('Файл отправлен на обработку:', error);
+            });
+        }
+
+        // Выполнение поиска
+        function performSearch() {
+            const query = searchInput.value.trim();
+
+            if (!query) {
+                alert('Пожалуйста, введите вопрос для поиска');
+                return;
+            }
+
+            loadingContainer.style.display = 'flex';
+            loadingText.textContent = 'Ищем ответ...';
+
+            // Показываем отладочную информацию
+            debugInfo.style.display = 'block';
+            debugContent.textContent = `Отправка запроса: "${query}"`;
+
+            fetch('http://localhost:8080/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain; charset=UTF-8'
+                },
+                body: query
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(data => {
+                loadingContainer.style.display = 'none';
+
+                // Обновляем отладочную информацию
+                debugContent.innerHTML = `
+                    <div><strong>Запрос:</strong> "${query}"</div>
+                    <div><strong>Ответ сервера:</strong> ${data}</div>
+                `;
+
+                displaySearchResults(data);
+                message.textContent = 'Поиск завершен!';
+                message.className = 'message success';
+            })
+            .catch(error => {
+                loadingContainer.style.display = 'none';
+                message.textContent = 'Ошибка при выполнении поиска';
+                message.className = 'message error';
+
+                // Обновляем отладочную информацию с ошибкой
+                debugContent.innerHTML = `
+                    <div><strong>Запрос:</strong> "${query}"</div>
+                    <div><strong>Ошибка:</strong> ${error.message}</div>
+                    <div>Проверьте консоль для подробной информации</div>
+                `;
+
+                console.log('Ошибка поиска:', error);
+            });
+        }
+
+        // Отображение результатов
+        function displaySearchResults(result) {
+            resultsContainer.style.display = 'block';
+            searchResults.innerHTML = '';
+
+            if (!result) {
+                searchResults.innerHTML = '<div class="result-item"><p class="result-text">Ничего не найдено</p></div>';
+                return;
+            }
+
+            const resultElement = document.createElement('div');
+            resultElement.className = 'result-item';
+            resultElement.innerHTML = `<p class="result-text">${result}</p>`;
+            searchResults.appendChild(resultElement);
+        }
+
+        // Сброс
+        function resetFileUpload() {
+            currentFile = null;
+            fileInput.value = '';
+            fileName.textContent = '';
+            searchInput.value = '';
+            message.textContent = '';
+            searchResults.innerHTML = '';
+            debugInfo.style.display = 'none';
+
+            fileInfo.style.display = 'none';
+            searchSection.style.display = 'none';
+            resultsContainer.style.display = 'none';
+            loadingContainer.style.display = 'none';
+            uploadArea.style.display = 'block';
+        }
+    });
 </script>
 </body>
 </html>
