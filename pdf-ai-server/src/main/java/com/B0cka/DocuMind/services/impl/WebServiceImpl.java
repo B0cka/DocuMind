@@ -18,11 +18,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -118,7 +115,7 @@ public class WebServiceImpl implements WebService {
             // 4. Формируем контекст для LLM
             String context = String.join("\n\n", relevantChunks);
             String prompt = """
-            Ответь строго на основе предоставленного контекста. Если в контексте нет ответа, скажи об этом.
+            Ответь строго на основе предоставленного контекста. Если в контексте нет ответа, скажи об этом. Используй только русский язык, только его
 
             Контекст:
             %s
@@ -141,8 +138,21 @@ public class WebServiceImpl implements WebService {
     }
 
     public List<String> findSimilarChunks(float[] questionVector, int limit) {
-        List<Object[]> results = webRepository.findSimilarVectors(questionVector, limit);
 
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < questionVector.length; i++) {
+            sb.append(questionVector[i]);
+            if (i != questionVector.length - 1) {
+                sb.append(",");
+            }
+        }
+        sb.append("]");
+        String vectorString = sb.toString();
+
+        // Выполняем запрос
+        List<Object[]> results = webRepository.findSimilarVectors(vectorString, limit);
+
+        // Извлекаем текст чанков
         List<String> chunks = new ArrayList<>();
         for (Object[] result : results) {
             String chunkText = (String) result[1];
@@ -151,6 +161,7 @@ public class WebServiceImpl implements WebService {
 
         return chunks;
     }
+
 
     public File convertPdfToTxt(MultipartFile multipartFile) throws IOException {
         File txtFile = File.createTempFile("document", ".txt");

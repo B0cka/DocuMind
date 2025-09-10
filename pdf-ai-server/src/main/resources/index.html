@@ -40,7 +40,7 @@
             font-size: 28px;
         }
 
-        /* Первая плашка - загрузка файла */
+        /* Загрузка файла */
         .upload-area {
             border: 2px dashed #302F2C;
             border-radius: 12px;
@@ -149,7 +149,7 @@
             background-color: rgba(255, 77, 77, 0.1);
         }
 
-        /* Вторая плашка - поиск */
+        /* Поиск */
         .search-section {
             display: none;
             width: 100%;
@@ -168,14 +168,13 @@
 
         .search-input {
             width: 100%;
-            padding: 16px 20px;
+            padding: 16px 95px 16px 20px;
             border: 2px solid #302F2C;
             border-radius: 25px;
             font-size: 16px;
             background-color: white;
             outline: none;
             transition: border-color 0.3s;
-            padding-right: 120px;
         }
 
         .search-input:focus {
@@ -185,7 +184,7 @@
 
         .search-button {
             position: absolute;
-            right: 8px;
+            right: 6px;
             top: 50%;
             transform: translateY(-50%);
             background-color: #302F2C;
@@ -197,6 +196,10 @@
             font-size: 14px;
             font-weight: 500;
             transition: background-color 0.3s;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .search-button:hover {
@@ -209,7 +212,8 @@
             margin-top: 25px;
             text-align: left;
             background-color: rgba(239, 237, 227, 0.3);
-            padding: 25px;
+            padding:
+25px;
             border-radius: 12px;
             border: 1px solid #E5E3DC;
         }
@@ -259,41 +263,13 @@
             color: #e74c3c;
         }
 
-        .debug-info {
-            display: none;
-            margin-top: 15px;
-            padding: 12px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            border-left: 4px solid #6c757d;
-            font-size: 13px;
-            color: #6c757d;
-            text-align: left;
-        }
-
-        button {
-            background-color: #302F2C;
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            transition: background-color 0.3s;
-            margin-top: 15px;
-        }
-
-        button:hover {
-            background-color: #4a4946;
-        }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>DocuMind</h1>
 
-    <!-- Первая плашка - загрузка файла -->
+    <!-- Загрузка файла -->
     <div class="upload-area" id="uploadArea">
         <i>📄</i>
         <p>Перетащите PDF-файл сюда или нажмите для выбора</p>
@@ -307,7 +283,7 @@
         <p id="loadingText">Обработка файла...</p>
     </div>
 
-    <!-- Информация о загруженном файле -->
+    <!-- Информация о файле -->
     <div class="file-info" id="fileInfo">
         <span class="file-name" id="fileName"></span>
         <button class="remove-file" id="removeFile">×</button>
@@ -315,7 +291,7 @@
 
     <div id="message" class="message"></div>
 
-    <!-- Вторая плашка - поиск -->
+    <!-- Поиск -->
     <div class="search-section" id="searchSection">
         <div class="search-input-container">
             <input type="text" class="search-input" id="searchInput" placeholder="Введите ваш вопрос...">
@@ -327,12 +303,6 @@
     <div class="results-container" id="resultsContainer">
         <div class="results-header">Результаты поиска</div>
         <div id="searchResults"></div>
-    </div>
-
-    <!-- Отладочная информация -->
-    <div class="debug-info" id="debugInfo">
-        <strong>Отладочная информация:</strong>
-        <div id="debugContent"></div>
     </div>
 </div>
 
@@ -351,19 +321,17 @@
         const resultsContainer = document.getElementById('resultsContainer');
         const searchResults = document.getElementById('searchResults');
         const message = document.getElementById('message');
-        const debugInfo = document.getElementById('debugInfo');
-        const debugContent = document.getElementById('debugContent');
 
         let currentFile = null;
 
-        // Обработка выбора файла
-        fileInput.addEventListener('change', function(e) {
+        const baseUrl = 'http://localhost:8080';
+
+        fileInput.addEventListener('change', function() {
             if (this.files && this.files.length > 0) {
                 handleFileUpload(this.files[0]);
             }
         });
 
-        // Drag and drop
         uploadArea.addEventListener('dragover', function(e) {
             e.preventDefault();
             uploadArea.style.backgroundColor = 'rgba(239, 237, 227, 0.4)';
@@ -377,35 +345,22 @@
         uploadArea.addEventListener('drop', function(e) {
             e.preventDefault();
             uploadArea.style.backgroundColor = 'rgba(239, 237, 227, 0.2)';
-
             if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                 handleFileUpload(e.dataTransfer.files[0]);
             }
         });
 
-        // Удаление файла
-        removeFile.addEventListener('click', function() {
-            resetFileUpload();
-        });
-
-        // Поиск
-        searchButton.addEventListener('click', function() {
-            performSearch();
-        });
-
+        removeFile.addEventListener('click', resetFileUpload);
+        searchButton.addEventListener('click', performSearch);
         searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                performSearch();
-            }
+            if (e.key === 'Enter') performSearch();
         });
 
-        // Загрузка файла
         function handleFileUpload(file) {
             if (file.type !== 'application/pdf') {
                 alert('Пожалуйста, выберите PDF-файл');
                 return;
             }
-
             currentFile = file;
             fileName.textContent = file.name;
 
@@ -416,14 +371,13 @@
             const formData = new FormData();
             formData.append('file', file);
 
-            fetch('http://localhost:8080/load-pdf', {
+            fetch(`${baseUrl}/load-pdf`, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                mode: 'cors'
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 return response.text();
             })
             .then(data => {
@@ -432,24 +386,17 @@
                 searchSection.style.display = 'block';
                 message.textContent = 'Файл успешно загружен! Можете задавать вопросы.';
                 message.className = 'message success';
-
-                console.log('Файл отправлен:', data);
             })
             .catch(error => {
                 loadingContainer.style.display = 'none';
-                fileInfo.style.display = 'block';
-                searchSection.style.display = 'block';
-                message.textContent = 'Файл отправлен на обработку!';
-                message.className = 'message';
-
-                console.log('Файл отправлен на обработку:', error);
+                message.textContent = 'Ошибка загрузки файла. Проверьте сервер.';
+                message.className = 'message error';
+                uploadArea.style.display = 'block';
             });
         }
 
-        // Выполнение поиска
         function performSearch() {
             const query = searchInput.value.trim();
-
             if (!query) {
                 alert('Пожалуйста, введите вопрос для поиска');
                 return;
@@ -458,69 +405,42 @@
             loadingContainer.style.display = 'flex';
             loadingText.textContent = 'Ищем ответ...';
 
-            // Показываем отладочную информацию
-            debugInfo.style.display = 'block';
-            debugContent.textContent = `Отправка запроса: "${query}"`;
-
-            fetch('http://localhost:8080/search', {
+            fetch(`${baseUrl}/search`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain; charset=UTF-8'
-                },
-                body: query
+                headers: { 'Content-Type': 'text/plain; charset=UTF-8' },
+                body: query,
+                mode: 'cors'
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 return response.text();
             })
             .then(data => {
                 loadingContainer.style.display = 'none';
-
-                // Обновляем отладочную информацию
-                debugContent.innerHTML = `
-                    <div><strong>Запрос:</strong> "${query}"</div>
-                    <div><strong>Ответ сервера:</strong> ${data}</div>
-                `;
-
                 displaySearchResults(data);
                 message.textContent = 'Поиск завершен!';
                 message.className = 'message success';
             })
             .catch(error => {
                 loadingContainer.style.display = 'none';
-                message.textContent = 'Ошибка при выполнении поиска';
+                message.textContent = 'Ошибка при выполнении поиска. Проверьте сервер.';
                 message.className = 'message error';
-
-                // Обновляем отладочную информацию с ошибкой
-                debugContent.innerHTML = `
-                    <div><strong>Запрос:</strong> "${query}"</div>
-                    <div><strong>Ошибка:</strong> ${error.message}</div>
-                    <div>Проверьте консоль для подробной информации</div>
-                `;
-
-                console.log('Ошибка поиска:', error);
             });
         }
 
-        // Отображение результатов
         function displaySearchResults(result) {
             resultsContainer.style.display = 'block';
             searchResults.innerHTML = '';
-
             if (!result) {
                 searchResults.innerHTML = '<div class="result-item"><p class="result-text">Ничего не найдено</p></div>';
                 return;
             }
-
             const resultElement = document.createElement('div');
             resultElement.className = 'result-item';
             resultElement.innerHTML = `<p class="result-text">${result}</p>`;
             searchResults.appendChild(resultElement);
         }
 
-        // Сброс
         function resetFileUpload() {
             currentFile = null;
             fileInput.value = '';
@@ -528,8 +448,6 @@
             searchInput.value = '';
             message.textContent = '';
             searchResults.innerHTML = '';
-            debugInfo.style.display = 'none';
-
             fileInfo.style.display = 'none';
             searchSection.style.display = 'none';
             resultsContainer.style.display = 'none';

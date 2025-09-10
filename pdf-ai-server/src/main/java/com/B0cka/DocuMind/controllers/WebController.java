@@ -3,14 +3,18 @@ package com.B0cka.DocuMind.controllers;
 import com.B0cka.DocuMind.services.WebService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@CrossOrigin(origins = {"http://127.0.0.1:5500"})
 public class WebController {
 
     private final WebService webService;

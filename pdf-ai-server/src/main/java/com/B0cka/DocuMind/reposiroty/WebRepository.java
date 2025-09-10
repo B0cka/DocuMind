@@ -17,7 +17,7 @@ public interface WebRepository extends JpaRepository<Vectors, Long> {
         ORDER BY distance 
         LIMIT :limit
         """, nativeQuery = true)
-    List<Object[]> findSimilarVectors(@Param("vector") float[] vector,
+    List<Object[]> findSimilarVectors(@Param("vector") String vector,
                                       @Param("limit") int limit);
 
 }
