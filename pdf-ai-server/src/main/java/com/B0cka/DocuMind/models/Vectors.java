@@ -28,4 +28,7 @@ public class Vectors {
     @Column(columnDefinition = "TEXT")
     private String text;
 
+    @Column(name = "doc_id")
+    private String docId;
+
 }

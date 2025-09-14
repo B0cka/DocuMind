@@ -14,10 +14,11 @@ public interface WebRepository extends JpaRepository<Vectors, Long> {
     @Query(value = """
         SELECT id, text, vector <=> CAST(:vector AS vector) AS distance 
         FROM vectors 
+        WHERE doc_id = :docId
         ORDER BY distance 
         LIMIT :limit
         """, nativeQuery = true)
     List<Object[]> findSimilarVectors(@Param("vector") String vector,
-                                      @Param("limit") int limit);
+                                      @Param("limit") int limit, @Param("docId") String docId);
 
 }

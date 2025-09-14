@@ -1,6 +1,8 @@
 package com.B0cka.DocuMind.services.impl;
 
 import com.B0cka.DocuMind.VectorResponse;
+import com.B0cka.DocuMind.dto.FrontRequest;
+import com.B0cka.DocuMind.dto.FrontSearchRequest;
 import com.B0cka.DocuMind.dto.OllamaRequest;
 import com.B0cka.DocuMind.dto.OllamaResponse;
 import com.B0cka.DocuMind.models.Vectors;
@@ -30,9 +32,9 @@ public class WebServiceImpl implements WebService {
     private final WebRepository webRepository;
 
     @Override
-    public void loadPDF(MultipartFile multipartFile) {
+    public void loadPDF(FrontRequest request) {
         try {
-            File file = convertPdfToTxt(multipartFile);
+            File file = convertPdfToTxt(request.getFile());
             List<String> chunks = chunkTxtFileStream(file, 200);
 
             for (String chunk : chunks) {
@@ -59,6 +61,7 @@ public class WebServiceImpl implements WebService {
 
                         Vectors vectors = Vectors.builder()
                                 .vector(vectorArray)
+                                .docId(request.getDocId())
                                 .text(chunk)
                                 .build();
 
@@ -79,11 +82,11 @@ public class WebServiceImpl implements WebService {
     }
 
     @Override
-    public String search(String question) {
+    public String search(FrontSearchRequest frontSearchRequest) {
         try {
             // 1. Векторизуем вопрос
             Map<String, String> requestBody = new HashMap<>();
-            requestBody.put("text", question);
+            requestBody.put("text", frontSearchRequest.getQuestion());
 
             @SuppressWarnings("unchecked")
             Map<String, Object> response = restTemplate.postForObject(
@@ -106,7 +109,7 @@ public class WebServiceImpl implements WebService {
             log.info("Вектор вопроса получен, размер: {}", questionVector.length);
 
             // 3. Ищем похожие чанки
-            List<String> relevantChunks = findSimilarChunks(questionVector, 5);
+            List<String> relevantChunks = findSimilarChunks(questionVector, 5, frontSearchRequest.getDocId());
 
             if (relevantChunks.isEmpty()) {
                 return "По вашему вопросу ничего не найдено";
@@ -123,7 +126,7 @@ public class WebServiceImpl implements WebService {
             Вопрос: %s
 
             Ответ:
-            """.formatted(context, question);
+            """.formatted(context, frontSearchRequest.getQuestion());
 
             log.info("Отправляем запрос к LLM с контекстом из {} чанков", relevantChunks);
 
@@ -137,7 +140,7 @@ public class WebServiceImpl implements WebService {
         }
     }
 
-    public List<String> findSimilarChunks(float[] questionVector, int limit) {
+    public List<String> findSimilarChunks(float[] questionVector, int limit, String docId) {
 
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < questionVector.length; i++) {
@@ -150,7 +153,7 @@ public class WebServiceImpl implements WebService {
         String vectorString = sb.toString();
 
         // Выполняем запрос
-        List<Object[]> results = webRepository.findSimilarVectors(vectorString, limit);
+        List<Object[]> results = webRepository.findSimilarVectors(vectorString, limit, docId);
 
         // Извлекаем текст чанков
         List<String> chunks = new ArrayList<>();

@@ -1,5 +1,7 @@
 package com.B0cka.DocuMind.controllers;
 
+import com.B0cka.DocuMind.dto.FrontRequest;
+import com.B0cka.DocuMind.dto.FrontSearchRequest;
 import com.B0cka.DocuMind.services.WebService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,22 +16,30 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://card-instead.gl.at.ply.gg:16755"})
+@CrossOrigin(origins = {"http://127.0.0.1:5500"})
 public class WebController {
 
     private final WebService webService;
 
     @PostMapping(value = "/load-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> handleFileUpload(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<String> handleFileUpload(@RequestParam("file") MultipartFile file,
+                                                   @RequestParam("docId") String docId) {
         log.info("получен файл: {}", file.getOriginalFilename());
-        webService.loadPDF(file);
+        log.info("получен ключ: {}", docId);
+
+        FrontRequest request = new FrontRequest();
+        request.setFile(file);
+        request.setDocId(docId);
+        webService.loadPDF(request);
+
         return ResponseEntity.ok().body("Файл '" + file.getOriginalFilename() + "' загружен!");
     }
 
     @PostMapping(value = "/search")
-    public ResponseEntity<String> searchAnswer(@RequestBody String question){
-        log.info("получен вопрос: {}", question);
-        return ResponseEntity.ok().body(webService.search(question));
+    public ResponseEntity<String> searchAnswer(@RequestBody FrontSearchRequest frontSearchRequest){
+        log.info("получен вопрос: {}", frontSearchRequest.getQuestion());
+        log.info("получен ключ: {}", frontSearchRequest.getDocId());
+        return ResponseEntity.ok().body(webService.search(frontSearchRequest));
     }
 
 }

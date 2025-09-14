@@ -323,8 +323,16 @@
         const message = document.getElementById('message');
 
         let currentFile = null;
+        let docId = null; // <-- хранит docId текущего файла
 
-        const baseUrl = 'http://provides-appreciation.gl.at.ply.gg:3154';
+        function generateUUID() {
+            return ([1e7]+-1e3+-4e3+-8e3+-1e11)
+                .replace(/[018]/g, c =>
+                    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+                );
+        }
+
+        const baseUrl = 'http://localhost:8080'; //http://provides-appreciation.gl.at.ply.gg:3154
 
         fileInput.addEventListener('change', function() {
             if (this.files && this.files.length > 0) {
@@ -368,8 +376,10 @@
             loadingContainer.style.display = 'flex';
             loadingText.textContent = 'Отправка файла на сервер...';
 
+            docId = generateUUID(); // генерируем новый docId для каждого файла
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('docId', docId); // <-- передаем docId на бэк
 
             fetch(`${baseUrl}/load-pdf`, {
                 method: 'POST',
@@ -406,26 +416,23 @@
             loadingText.textContent = 'Ищем ответ...';
 
             fetch(`${baseUrl}/search`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain; charset=UTF-8' },
-                body: query,
-                mode: 'cors'
-            })
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                return response.text();
-            })
-            .then(data => {
-                loadingContainer.style.display = 'none';
-                displaySearchResults(data);
-                message.textContent = 'Поиск завершен!';
-                message.className = 'message success';
-            })
-            .catch(error => {
-                loadingContainer.style.display = 'none';
-                message.textContent = 'Ошибка при выполнении поиска. Проверьте сервер.';
-                message.className = 'message error';
-            });
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    body: JSON.stringify({ question: query, docId: docId }),
+    mode: 'cors'
+})
+.then(response => response.text())
+.then(data => {
+    loadingContainer.style.display = 'none';
+    displaySearchResults(data);
+    message.textContent = 'Поиск завершен!';
+    message.className = 'message success';
+})
+.catch(error => {
+    loadingContainer.style.display = 'none';
+    message.textContent = 'Ошибка при выполнении поиска. Проверьте сервер.';
+    message.className = 'message error';
+});
         }
 
         function displaySearchResults(result) {
