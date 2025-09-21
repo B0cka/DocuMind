@@ -7,18 +7,15 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-
 @Repository
 public interface WebRepository extends JpaRepository<Vectors, Long> {
 
-    @Query(value = """
-        SELECT id, text, vector <=> CAST(:vector AS vector) AS distance 
-        FROM vectors 
-        WHERE doc_id = :docId
-        ORDER BY distance 
-        LIMIT :limit
-        """, nativeQuery = true)
+    @Query(value = "SELECT v.text, v.vector <=> CAST(:vector AS vector) AS similarity " +
+            "FROM vectors v " +
+            "WHERE v.doc_id = :docId " +
+            "ORDER BY similarity ASC " +
+            "LIMIT :limit", nativeQuery = true)
     List<Object[]> findSimilarVectors(@Param("vector") String vector,
-                                      @Param("limit") int limit, @Param("docId") String docId);
-
+                                      @Param("limit") int limit,
+                                      @Param("docId") String docId);
 }

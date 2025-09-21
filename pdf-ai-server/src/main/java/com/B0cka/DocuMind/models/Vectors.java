@@ -9,6 +9,8 @@ import org.hibernate.annotations.Array;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.Instant;
+
 @Entity
 @Builder
 @NoArgsConstructor
@@ -30,5 +32,8 @@ public class Vectors {
 
     @Column(name = "doc_id")
     private String docId;
+
+    private Instant createdAt;
+
 
 }
