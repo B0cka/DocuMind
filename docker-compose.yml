@@ -10,8 +10,13 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - pgvector_data:/var/lib/postgresql/data  # Том для данных БД (ОБЯЗАТЕЛЬНО!)
-      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d  # Для init скриптов
+      - pgvector_data:/var/lib/postgresql/data
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
+  tesseract-server:
+    image: hertzg/tesseract-server:latest
+    ports:
+      - "8123:8884"
 
 volumes:
   pgvector_data:

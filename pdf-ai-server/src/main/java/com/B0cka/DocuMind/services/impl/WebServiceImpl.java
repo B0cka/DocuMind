@@ -27,9 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.time.Instant;
 import java.util.*;
@@ -56,7 +54,7 @@ public class WebServiceImpl implements WebService {
             }
 
             File txtFile = convertPdfToTxtWithOCR(request.getFile());
-            List<String> chunks = chunkTxtFileStream(txtFile, 200);
+            List<String> chunks = chunkTxtFileByParagraphs(txtFile);
 
             Document document = Document.builder()
                     .id(request.getDocId())
@@ -97,7 +95,7 @@ public class WebServiceImpl implements WebService {
                                 .build();
 
                         webRepository.save(vectorEntity);
-                        log.info("Чанк сохранен", chunk);
+                        log.info("Чанк сохранен: {}", chunk);
                     }
                 } catch (Exception e) {
                     log.error("Ошибка при обработке чанка {}: {}", chunk, e.getMessage());
@@ -149,6 +147,7 @@ public class WebServiceImpl implements WebService {
             String prompt = """
             <|begin_of_text|><|start_header_id|>system<|end_header_id|>
             Ты - помощник, который отвечает на вопросы строго на основе предоставленного контекста.
+            Старайся максимально конктретизировать ответ на вопрос, выжимая максимум информации из предоставленного тебе текста по данному вопросу.
             Если в контексте нет информации для ответа, скажи об этом.
             Отвечай только на русском языке.<|eot_id|>
             <|start_header_id|>user<|end_header_id|>
@@ -231,7 +230,6 @@ public class WebServiceImpl implements WebService {
 
         try (PDDocument document = PDDocument.load(multipartFile.getInputStream());
              FileWriter writer = new FileWriter(txtFile)) {
-
             PDFRenderer renderer = new PDFRenderer(document);
             PDFTextStripper stripper = new PDFTextStripper();
 
@@ -272,6 +270,30 @@ public class WebServiceImpl implements WebService {
         return txtFile;
     }
 
+    public List<String> chunkTxtFileByParagraphs(File txtFile) throws IOException {
+        List<String> chunks = new ArrayList<>();
+        StringBuilder currentChunk = new StringBuilder();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(txtFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty()) {
+                    // пустая строка = конец абзаца
+                    if (currentChunk.length() > 0) {
+                        chunks.add(currentChunk.toString().trim());
+                        currentChunk.setLength(0);
+                    }
+                } else {
+                    currentChunk.append(line).append(" ");
+                }
+            }
+            if (currentChunk.length() > 0) {
+                chunks.add(currentChunk.toString().trim());
+            }
+        }
+        return chunks;
+    }
+
     private String callTesseractServer(File imageFile) {
         try {
             // Создаем объект с настройками OCR
@@ -310,6 +332,7 @@ public class WebServiceImpl implements WebService {
                 Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
                 String extractedText = (String) data.get("stdout");
 
+                log.info("Ответ tesseract сервера: {}", extractedText);
                 return extractedText != null ? extractedText.trim() : "";
             } else {
                 log.error("Tesseract Server вернул ошибку: {} - {}", response.getStatusCode(), response.getBody());
