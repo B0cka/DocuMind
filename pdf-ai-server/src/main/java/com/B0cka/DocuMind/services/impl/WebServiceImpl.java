@@ -167,7 +167,7 @@ public class WebServiceImpl implements WebService {
             headers.set("Authorization", "Bearer " + apiKey);
 
             Map<String, Object> requestMap = new HashMap<>();
-            requestMap.put("model", "Meta-Llama-3.1-8B-Instruct");
+            requestMap.put("model", "Meta-Llama-3.1-70B-Instruct");
             requestMap.put("prompt", prompt);
             requestMap.put("max_tokens", 1000);
             requestMap.put("temperature", 0.1);
