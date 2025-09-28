@@ -3,13 +3,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
-import numpy as np
 
 print("Загрузка модели... это может занять несколько секунд")
-model = SentenceTransformer('all-MiniLM-L6-v2')  # Самая популярная легкая модель
+model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-mpnet-base-v2")
 print("Модель загружена!")
 
-app = FastAPI(title="Vectorization API", description="Микросервис для векторизации текста")
+app = FastAPI(
+    title="Vectorization API",
+    description="Микросервис для векторизации текста"
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,23 +24,20 @@ app.add_middleware(
 class VectorizeRequest(BaseModel):
     text: str
 
+
 class VectorizeResponse(BaseModel):
     vector: list[float]
+
 
 @app.post("/vectorize", response_model=VectorizeResponse)
 async def create_vector(request: VectorizeRequest):
     """
     Принимает текст, возвращает его векторное представление.
     """
-
     embedding = model.encode(request.text)
+    return VectorizeResponse(vector=embedding.tolist())
 
-    embedding_list = embedding.tolist()
-
-    return VectorizeResponse(vector=embedding_list)
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-#python vector_api.py

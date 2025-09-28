@@ -24,7 +24,7 @@ public class Vectors {
 
     @Column
     @JdbcTypeCode(SqlTypes.VECTOR)
-    @Array(length = 384)
+    @Array(length = 768)
     private float[] vector;
 
     @Column(columnDefinition = "TEXT")
