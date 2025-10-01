@@ -56,20 +56,40 @@ public class WebServiceImpl implements WebService {
 
             File txtFile = convertPdfToTxtWithOCR(request.getFile());
             List<String> chunks = chunkTxtFileByParagraphs(txtFile);
+            List<String> bigChunks = new ArrayList<>();
+
+            int groupSize = 5;
+            StringBuilder sb = new StringBuilder();
+            int count = 0;
+
+            for (String p : chunks) {
+                sb.append(p).append("\n\n");
+                count++;
+
+                if (count >= groupSize) {
+                    bigChunks.add(sb.toString().trim());
+                    sb.setLength(0);
+                    count = 0;
+                }
+            }
+
+            if (sb.length() > 0) {
+                bigChunks.add(sb.toString().trim());
+            }
 
             Document document = Document.builder()
                     .id(request.getDocId())
                     .filename(request.getFile().getOriginalFilename())
                     .originalFilename(request.getFile().getOriginalFilename())
                     .fileSize(request.getFile().getSize())
-                    .totalChunks(chunks.size())
+                    .totalChunks(bigChunks.size())
                     .uploadedAt(Instant.now())
                     .build();
 
             documentRepository.save(document);
 
-            for (int i = 0; i < chunks.size(); i++) {
-                String chunk = chunks.get(i);
+            for (int i = 0; i < bigChunks.size(); i++) {
+                String chunk = bigChunks.get(i);
 
                 try {
                     Map<String, String> requestBody = new HashMap<>();
