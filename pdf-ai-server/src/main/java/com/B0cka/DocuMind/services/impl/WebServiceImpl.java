@@ -29,6 +29,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
+import java.text.BreakIterator;
 import java.time.Instant;
 import java.util.*;
 
@@ -232,6 +233,7 @@ public class WebServiceImpl implements WebService {
              FileWriter writer = new FileWriter(txtFile)) {
             PDFRenderer renderer = new PDFRenderer(document);
             PDFTextStripper stripper = new PDFTextStripper();
+            stripper.setSortByPosition(true);
 
             for (int page = 0; page < document.getNumberOfPages(); page++) {
                 stripper.setStartPage(page + 1);
@@ -272,25 +274,46 @@ public class WebServiceImpl implements WebService {
 
     public List<String> chunkTxtFileByParagraphs(File txtFile) throws IOException {
         List<String> chunks = new ArrayList<>();
-        StringBuilder currentChunk = new StringBuilder();
+        StringBuilder textBuilder = new StringBuilder();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(txtFile))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) {
-                    // пустая строка = конец абзаца
-                    if (currentChunk.length() > 0) {
-                        chunks.add(currentChunk.toString().trim());
-                        currentChunk.setLength(0);
-                    }
-                } else {
-                    currentChunk.append(line).append(" ");
-                }
-            }
-            if (currentChunk.length() > 0) {
-                chunks.add(currentChunk.toString().trim());
+                textBuilder.append(line).append("\n");
             }
         }
+
+        String text = textBuilder.toString()
+                .replaceAll("-\\s*\\n\\s*", "")
+                .replaceAll("(?<![\\.\\?\\!])\\n", " ");
+
+        String[] paragraphs = text.split("\\n\\s*\\n");
+
+
+        int sentencesPerChunk = 7;
+        int overlap = 2;
+        for (String paragraph : paragraphs) {
+            paragraph = paragraph.trim();
+            if (paragraph.isEmpty()) continue;
+
+            List<String> sentences = new ArrayList<>();
+            BreakIterator iterator = BreakIterator.getSentenceInstance(Locale.forLanguageTag("ru"));
+            iterator.setText(paragraph);
+            int start = iterator.first();
+            for (int end = iterator.next(); end != BreakIterator.DONE; start = end, end = iterator.next()) {
+                String sentence = paragraph.substring(start, end).trim();
+                if (!sentence.isEmpty()) {
+                    sentences.add(sentence);
+                }
+            }
+
+            for (int i = 0; i < sentences.size(); i += sentencesPerChunk - overlap) {
+                int end = Math.min(i + sentencesPerChunk, sentences.size());
+                String chunk = String.join(" ", sentences.subList(i, end));
+                chunks.add(chunk);
+            }
+        }
+
         return chunks;
     }
 
@@ -352,30 +375,6 @@ public class WebServiceImpl implements WebService {
         String cleanText = text.replaceAll("\\s+", "");
 
         return cleanText.length() < 50;
-    }
-
-    public List<String> chunkTxtFileStream(File txtFile, int wordsPerChunk) throws IOException {
-        List<String> chunks = new ArrayList<>();
-        StringBuilder currentChunk = new StringBuilder();
-        int wordCount = 0;
-
-        try (Scanner scanner = new Scanner(txtFile)) {
-            while (scanner.hasNext()) {
-                String word = scanner.next();
-                currentChunk.append(word).append(" ");
-                wordCount++;
-
-                if (wordCount >= wordsPerChunk) {
-                    chunks.add(currentChunk.toString().trim());
-                    currentChunk.setLength(0);
-                    wordCount = 0;
-                }
-            }
-            if (wordCount > 0) {
-                chunks.add(currentChunk.toString().trim());
-            }
-        }
-        return chunks;
     }
 
 }
