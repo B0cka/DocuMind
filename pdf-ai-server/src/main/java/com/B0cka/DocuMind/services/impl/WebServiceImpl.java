@@ -24,6 +24,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -42,6 +45,7 @@ public class WebServiceImpl implements WebService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final WebRepository webRepository;
     private final DocumentRepository documentRepository;
+    private WebClient client = WebClient.create("http://localhost:8000");
 
     @Value("${api.key}")
     private String apiKey;
@@ -145,6 +149,7 @@ public class WebServiceImpl implements WebService {
                     Map.class
             );
 
+
             if (response == null || !response.containsKey("vector")) {
                 throw new RuntimeException("Не удалось векторизовать вопрос");
             }
@@ -166,18 +171,25 @@ public class WebServiceImpl implements WebService {
             String context = String.join("\n\n", relevantChunks);
 
             String prompt = """
-            <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-            Ты - помощник, который отвечает на вопросы строго на основе предоставленного контекста.
-            Старайся максимально конктретизировать ответ на вопрос, выжимая максимум информации из предоставленного тебе текста по данному вопросу.
-            Если в контексте нет информации для ответа, скажи об этом.
-            Отвечай только на русском языке.<|eot_id|>
-            <|start_header_id|>user<|end_header_id|>
-            Контекст:
-            %s
+                    <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+                    Ты — интеллектуальный помощник, который отвечает на вопросы исключительно на основе предоставленного контекста.
+                    Твоя задача — находить в тексте все относящиеся к вопросу сведения и формировать ясный, логичный и развернутый ответ.
+                    Если информация в контексте фрагментарна — собери все доступные куски и выведи их связно и последовательно.
+                    Если ответ в контексте отсутствует, прямо укажи на это, не придумывая ничего лишнего.
+                    Отвечай всегда на русском языке, избегая двусмысленности и общих фраз.
+                    <|eot_id|>
+                    <|start_header_id|>user<|end_header_id|>
+                    Контекст (фрагменты из документа):
+                    %s
+                    
+                    Вопрос пользователя:
+                    %s
+                    
+                    Сформулируй ответ максимально полно, используя только предоставленный контекст. 
+                    <|eot_id|>
+                    <|start_header_id|>assistant<|end_header_id|>
+                    """.formatted(context, frontSearchRequest.getQuestion());
 
-            Вопрос: %s<|eot_id|>
-            <|start_header_id|>assistant<|end_header_id|>
-            """.formatted(context, frontSearchRequest.getQuestion());
 
             log.info("Отправляем запрос к AwanLLM API с контекстом из {} чанков", relevantChunks.size());
             log.info("Чанки: {}", relevantChunks);
@@ -396,5 +408,6 @@ public class WebServiceImpl implements WebService {
 
         return cleanText.length() < 50;
     }
+
 
 }
