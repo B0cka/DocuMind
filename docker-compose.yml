@@ -19,3 +19,4 @@ services:
       - "8123:8884"
 volumes:
   pgvector_data:
+
