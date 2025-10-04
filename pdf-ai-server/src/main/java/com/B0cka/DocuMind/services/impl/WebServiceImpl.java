@@ -35,6 +35,9 @@ import java.nio.file.Files;
 import java.text.BreakIterator;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -92,40 +95,23 @@ public class WebServiceImpl implements WebService {
 
             documentRepository.save(document);
 
+            List<String> evenChunks = new ArrayList<>();
+            List<String> oddChunks = new ArrayList<>();
+
             for (int i = 0; i < bigChunks.size(); i++) {
-                String chunk = bigChunks.get(i);
-
-                try {
-                    Map<String, String> requestBody = new HashMap<>();
-                    requestBody.put("text", chunk);
-
-                    Map<String, Object> response = restTemplate.postForObject(
-                            "http://localhost:8000/vectorize",
-                            requestBody,
-                            Map.class
-                    );
-
-                    if (response != null && response.containsKey("vector")) {
-                        List<Double> vectorList = (List<Double>) response.get("vector");
-                        float[] vectorArray = new float[vectorList.size()];
-                        for (int j = 0; j < vectorList.size(); j++) {
-                            vectorArray[j] = vectorList.get(j).floatValue();
-                        }
-
-                        Vectors vectorEntity = Vectors.builder()
-                                .vector(vectorArray)
-                                .docId(request.getDocId())
-                                .text(chunk)
-                                .createdAt(Instant.now())
-                                .build();
-
-                        webRepository.save(vectorEntity);
-                        log.info("Чанк сохранен: {}", chunk);
-                    }
-                } catch (Exception e) {
-                    log.error("Ошибка при обработке чанка {}: {}", chunk, e.getMessage());
+                if (i % 2 == 0) {
+                    evenChunks.add(bigChunks.get(i));
+                } else {
+                    oddChunks.add(bigChunks.get(i));
                 }
             }
+
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+            executor.submit(() -> processChunks(evenChunks, request.getDocId()));
+            executor.submit(() -> processChunks(oddChunks, request.getDocId()));
+
+            executor.shutdown();
+            executor.awaitTermination(10, TimeUnit.MINUTES);
 
             if (txtFile.exists()) {
                 txtFile.delete();
@@ -133,6 +119,8 @@ public class WebServiceImpl implements WebService {
 
         } catch (IOException e) {
             throw new RuntimeException("Ошибка обработки PDF: " + e.getMessage(), e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
     @Override
@@ -148,7 +136,6 @@ public class WebServiceImpl implements WebService {
                     requestBody,
                     Map.class
             );
-
 
             if (response == null || !response.containsKey("vector")) {
                 throw new RuntimeException("Не удалось векторизовать вопрос");
@@ -351,24 +338,22 @@ public class WebServiceImpl implements WebService {
 
     private String callTesseractServer(File imageFile) {
         try {
-            // Создаем объект с настройками OCR
-            Map<String, Object> options = new HashMap<>();
-            options.put("languages", Arrays.asList("rus", "eng")); // Языки для распознавания
-            options.put("dpi", 300); // DPI изображения
-            options.put("pageSegmentationMethod", 6); // PSM (Page Segmentation Mode)
-            options.put("ocrEngineMode", 1); // OEM (OCR Engine Mode)
 
-            // Преобразуем настройки в JSON строку
+            Map<String, Object> options = new HashMap<>();
+            options.put("languages", Arrays.asList("rus", "eng"));
+            options.put("dpi", 300);
+            options.put("pageSegmentationMethod", 6);
+            options.put("ocrEngineMode", 1);
+
             ObjectMapper objectMapper = new ObjectMapper();
             String optionsJson = objectMapper.writeValueAsString(options);
 
-            // Формируем multipart/form-data запрос
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("options", optionsJson); // JSON с настройками
-            body.add("file", new FileSystemResource(imageFile)); // Файл изображения
+            body.add("options", optionsJson);
+            body.add("file", new FileSystemResource(imageFile));
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
@@ -379,11 +364,9 @@ public class WebServiceImpl implements WebService {
                     String.class
             );
 
-            // Обрабатываем ответ
             if (response.getStatusCode() == HttpStatus.OK) {
                 Map<String, Object> responseBody = objectMapper.readValue(response.getBody(), Map.class);
 
-                // Извлекаем данные из ответа
                 Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
                 String extractedText = (String) data.get("stdout");
 
@@ -403,10 +386,42 @@ public class WebServiceImpl implements WebService {
         if (text == null || text.trim().isEmpty()) {
             return true;
         }
-
         String cleanText = text.replaceAll("\\s+", "");
-
         return cleanText.length() < 50;
+    }
+
+    private void processChunks(List<String> chunks, String docId) {
+        for (String chunk : chunks) {
+            try {
+                Map<String, String> requestBody = Map.of("text", chunk);
+
+                Map<String, Object> response = restTemplate.postForObject(
+                        "http://localhost:8000/vectorize",
+                        requestBody,
+                        Map.class
+                );
+
+                if (response != null && response.containsKey("vector")) {
+                    List<Double> vectorList = (List<Double>) response.get("vector");
+                    float[] vectorArray = new float[vectorList.size()];
+                    for (int j = 0; j < vectorList.size(); j++) {
+                        vectorArray[j] = vectorList.get(j).floatValue();
+                    }
+
+                    Vectors vectorEntity = Vectors.builder()
+                            .vector(vectorArray)
+                            .docId(docId)
+                            .text(chunk)
+                            .createdAt(Instant.now())
+                            .build();
+
+                    webRepository.save(vectorEntity);
+                    log.info("Чанк сохранен: {}", chunk);
+                }
+            } catch (Exception e) {
+                log.error("Ошибка при обработке чанка {}: {}", chunk, e.getMessage());
+            }
+        }
     }
 
 
