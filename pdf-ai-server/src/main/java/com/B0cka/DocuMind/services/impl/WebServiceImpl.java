@@ -7,7 +7,6 @@ import com.B0cka.DocuMind.models.Vectors;
 import com.B0cka.DocuMind.reposiroty.DocumentRepository;
 import com.B0cka.DocuMind.reposiroty.WebRepository;
 import com.B0cka.DocuMind.services.WebService;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +15,8 @@ import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
@@ -24,20 +25,16 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.file.Files;
 import java.text.BreakIterator;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -48,7 +45,6 @@ public class WebServiceImpl implements WebService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final WebRepository webRepository;
     private final DocumentRepository documentRepository;
-    private WebClient client = WebClient.create("http://localhost:8000");
 
     @Value("${api.key}")
     private String apiKey;
@@ -65,7 +61,7 @@ public class WebServiceImpl implements WebService {
             List<String> chunks = chunkTxtFileByParagraphs(txtFile);
             List<String> bigChunks = new ArrayList<>();
 
-            int groupSize = 5;
+            int groupSize = 3;
             StringBuilder sb = new StringBuilder();
             int count = 0;
 
@@ -106,12 +102,11 @@ public class WebServiceImpl implements WebService {
                 }
             }
 
-            ExecutorService executor = Executors.newFixedThreadPool(2);
-            executor.submit(() -> processChunks(evenChunks, request.getDocId()));
-            executor.submit(() -> processChunks(oddChunks, request.getDocId()));
-
-            executor.shutdown();
-            executor.awaitTermination(10, TimeUnit.MINUTES);
+            var executor = Executors.newVirtualThreadPerTaskExecutor();
+                executor.submit(() -> processChunks(evenChunks, request.getDocId()));
+                executor.submit(() -> processChunks(oddChunks, request.getDocId()));
+                executor.shutdown();
+                executor.awaitTermination(1, TimeUnit.MINUTES);
 
             if (txtFile.exists()) {
                 txtFile.delete();
@@ -127,43 +122,34 @@ public class WebServiceImpl implements WebService {
     public String search(FrontSearchRequest frontSearchRequest) {
         try {
 
-            Map<String, String> requestBody = new HashMap<>();
-            requestBody.put("text", frontSearchRequest.getQuestion());
-
-            @SuppressWarnings("unchecked")
-            Map<String, Object> response = restTemplate.postForObject(
-                    "http://localhost:8000/vectorize",
-                    requestBody,
-                    Map.class
-            );
-
-            if (response == null || !response.containsKey("vector")) {
-                throw new RuntimeException("Не удалось векторизовать вопрос");
-            }
-
-            List<Double> vectorList = (List<Double>) response.get("vector");
-            float[] questionVector = new float[vectorList.size()];
-            for (int i = 0; i < vectorList.size(); i++) {
-                questionVector[i] = vectorList.get(i).floatValue();
-            }
-
-            log.info("Вектор вопроса получен, размер: {}", questionVector.length);
-
-            List<String> relevantChunks = findSimilarChunks(questionVector, 5, frontSearchRequest.getDocId());
+            ArrayList<String> verbs = analyzeQuestion(frontSearchRequest.getQuestion());
+            List<String> relevantChunks = verbs.parallelStream()
+                    .map(this::callVectorizeServer)
+                    .flatMap(v -> findSimilarChunks(v, 2, frontSearchRequest.getDocId()).stream())
+                    .distinct()
+                    .toList();
 
             if (relevantChunks.isEmpty()) {
                 return "По вашему вопросу ничего не найдено";
             }
 
             String context = String.join("\n\n", relevantChunks);
-
+            log.info("Чанки, найденные по словам: {}", relevantChunks);
             String prompt = """
                     <|begin_of_text|><|start_header_id|>system<|end_header_id|>
                     Ты — интеллектуальный помощник, который отвечает на вопросы исключительно на основе предоставленного контекста.
                     Твоя задача — находить в тексте все относящиеся к вопросу сведения и формировать ясный, логичный и развернутый ответ.
-                    Если информация в контексте фрагментарна — собери все доступные куски и выведи их связно и последовательно.
-                    Если ответ в контексте отсутствует, прямо укажи на это, не придумывая ничего лишнего.
-                    Отвечай всегда на русском языке, избегая двусмысленности и общих фраз.
+                    Ты должен действовать пошагово:
+                    1) Раздели контекст на смысловые части.
+                    2) Из каждой части выпиши все факты, относящиеся к вопросу.
+                    3) Объедини их, избегая потерь информации.
+                    4) Составь итоговый ответ.
+                    
+                    Не сокращай и не обобщай — включай даже мелкие детали.
+                    Избегай двусмысленности и расплывчатых формулировок.
+                    Пиши академически ясным стилем, можешь использовать маркированные пункты.
+                    Ответ всегда давай на русском языке.
+                    Минимальный объём ответа — 200 слов (если информации достаточно).
                     <|eot_id|>
                     <|start_header_id|>user<|end_header_id|>
                     Контекст (фрагменты из документа):
@@ -172,11 +158,17 @@ public class WebServiceImpl implements WebService {
                     Вопрос пользователя:
                     %s
                     
-                    Сформулируй ответ максимально полно, используя только предоставленный контекст. 
+                    Любое утверждение в ответе должно иметь прямое текстовое подтверждение в контексте.
+                    
+                    Если подтверждения нет — не включай это утверждение.
+                    Сформулируй ответ максимально полно, используя только предоставленный контекст.
+                    
+                    Перед выводом итогового ответа:
+                    1. Проверь каждое утверждение — есть ли в контексте конкретное подтверждение?
+                    2. Если нет — исключи или обозначь, что данных недостаточно.
                     <|eot_id|>
                     <|start_header_id|>assistant<|end_header_id|>
                     """.formatted(context, frontSearchRequest.getQuestion());
-
 
             log.info("Отправляем запрос к AwanLLM API с контекстом из {} чанков", relevantChunks.size());
             log.info("Чанки: {}", relevantChunks);
@@ -208,7 +200,7 @@ public class WebServiceImpl implements WebService {
                 if (!choices.isEmpty()) {
                     Map<String, Object> firstChoice = choices.get(0);
                     String answer = (String) firstChoice.get("text");
-                    log.info("Ответ от AwanLLM: {}", answer);
+                    log.info("Ответ от LLM: {}", answer);
                     return answer;
                 }
             }
@@ -230,14 +222,10 @@ public class WebServiceImpl implements WebService {
 
             List<Object[]> results = webRepository.findSimilarVectors(vectorString, limit, docId);
 
-            List<String> chunks = new ArrayList<>();
-            for (Object[] result : results) {
-                if (result.length > 0 && result[0] != null) {
-                    chunks.add((String) result[0]);
-                }
-            }
-
-            return chunks;
+            return results.stream()
+                    .filter(r -> r.length > 0 && r[0] != null)
+                    .map(r -> (String) r[0])
+                    .toList();
 
         } catch (Exception e) {
             log.error("Ошибка при поиске похожих чанков: {}", e.getMessage());
@@ -310,7 +298,7 @@ public class WebServiceImpl implements WebService {
 
 
         int sentencesPerChunk = 7;
-        int overlap = 2;
+        int overlap = 1;
         for (String paragraph : paragraphs) {
             paragraph = paragraph.trim();
             if (paragraph.isEmpty()) continue;
@@ -424,5 +412,84 @@ public class WebServiceImpl implements WebService {
         }
     }
 
+    private ArrayList<String> analyzeQuestion(String string) {
+        log.info("Детальный анализ вопроса: {}", string);
 
+        String prompt = """
+                    <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+                    Ты — аналитический помощник для системы поиска.
+                    Преобразуй вопрос в набор ключевых слов и тематических понятий,
+                    которые помогут найти нужные фрагменты текста.
+                    Не пиши объяснений — выведи только слова через запятую, без кавычек и нумерации.
+                
+                    Пример:
+                    Вопрос: Почему Пётр I начал реформы?
+                    Ответ: Пётр I, реформы, Россия, XVIII век, западные идеи, модернизация
+                    <|eot_id|><|start_header_id|>user<|end_header_id|>
+                
+                    Вопрос:
+                    %s
+                """.formatted(string);
+
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + apiKey);
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model", "Meta-Llama-3.1-70B-Instruct");
+        requestMap.put("prompt", prompt);
+        requestMap.put("max_tokens", 1000);
+        requestMap.put("temperature", 0.1);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestMap, headers);
+        ResponseEntity<Map> awanResponse = restTemplate.exchange(
+                "https://api.awanllm.com/v1/completions",
+                HttpMethod.POST,
+                entity,
+                Map.class
+        );
+
+        Map<String, Object> responseBody = awanResponse.getBody();
+        if (responseBody != null && responseBody.containsKey("choices")) {
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+            if (!choices.isEmpty()) {
+                Map<String, Object> firstChoice = choices.get(0);
+                String answer = (String) firstChoice.get("text");
+
+                log.info("Ответ от LLM: {}", answer);
+
+                return Arrays.stream(answer.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.toCollection(ArrayList::new));
+
+            }
+        }
+        throw new RuntimeException("Не удалось получить ответ от AwanLLM API");
+
+    }
+
+    private float[] callVectorizeServer(String str){
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("text", str);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> response = restTemplate.postForObject(
+                "http://localhost:8000/vectorize",
+                requestBody,
+                Map.class
+        );
+
+        if (response == null || !response.containsKey("vector")) {
+            throw new RuntimeException("Не удалось векторизовать вопрос");
+        }
+
+        List<Double> vectorList = (List<Double>) response.get("vector");
+        float[] questionVector = new float[vectorList.size()];
+        for (int i = 0; i < vectorList.size(); i++) {
+            questionVector[i] = vectorList.get(i).floatValue();
+        }
+
+        return questionVector;
+    }
 }
