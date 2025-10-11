@@ -61,7 +61,7 @@ public class WebServiceImpl implements WebService {
             List<String> chunks = chunkTxtFileByParagraphs(txtFile);
             List<String> bigChunks = new ArrayList<>();
 
-            int groupSize = 3;
+            int groupSize = 1;
             StringBuilder sb = new StringBuilder();
             int count = 0;
 
@@ -125,7 +125,7 @@ public class WebServiceImpl implements WebService {
             ArrayList<String> verbs = analyzeQuestion(frontSearchRequest.getQuestion());
             List<String> relevantChunks = verbs.parallelStream()
                     .map(this::callVectorizeServer)
-                    .flatMap(v -> findSimilarChunks(v, 2, frontSearchRequest.getDocId()).stream())
+                    .flatMap(v -> findSimilarChunks(v, 1, frontSearchRequest.getDocId()).stream())
                     .distinct()
                     .toList();
 
@@ -139,35 +139,29 @@ public class WebServiceImpl implements WebService {
                     <|begin_of_text|><|start_header_id|>system<|end_header_id|>
                     Ты — интеллектуальный помощник, который отвечает на вопросы исключительно на основе предоставленного контекста.
                     Твоя задача — находить в тексте все относящиеся к вопросу сведения и формировать ясный, логичный и развернутый ответ.
-                    Ты должен действовать пошагово:
+                    
+                    Действуй строго пошагово:
                     1) Раздели контекст на смысловые части.
                     2) Из каждой части выпиши все факты, относящиеся к вопросу.
                     3) Объедини их, избегая потерь информации.
-                    4) Составь итоговый ответ.
+                    4) Отдай приоритет конкретным данным, цифрам и примерам, а не общим формулировкам.
+                    5) Проверь каждое утверждение — есть ли в контексте прямое подтверждение? 
+                       Если нет — исключи его или укажи, что данных недостаточно.
                     
                     Не сокращай и не обобщай — включай даже мелкие детали.
-                    Избегай двусмысленности и расплывчатых формулировок.
-                    Пиши академически ясным стилем, можешь использовать маркированные пункты.
-                    Ответ всегда давай на русском языке.
+                    Не повторяй одну и ту же мысль разными словами.
+                    Пиши академически ясным стилем.
                     Минимальный объём ответа — 200 слов (если информации достаточно).
-                    <|eot_id|>
-                    <|start_header_id|>user<|end_header_id|>
+                    Ответ всегда давай на русском языке.
+                    
+                    <|eot_id|><|start_header_id|>user<|end_header_id|>
                     Контекст (фрагменты из документа):
                     %s
                     
                     Вопрос пользователя:
                     %s
                     
-                    Любое утверждение в ответе должно иметь прямое текстовое подтверждение в контексте.
-                    
-                    Если подтверждения нет — не включай это утверждение.
-                    Сформулируй ответ максимально полно, используя только предоставленный контекст.
-                    
-                    Перед выводом итогового ответа:
-                    1. Проверь каждое утверждение — есть ли в контексте конкретное подтверждение?
-                    2. Если нет — исключи или обозначь, что данных недостаточно.
-                    <|eot_id|>
-                    <|start_header_id|>assistant<|end_header_id|>
+                    <|eot_id|><|start_header_id|>assistant<|end_header_id|>
                     """.formatted(context, frontSearchRequest.getQuestion());
 
             log.info("Отправляем запрос к AwanLLM API с контекстом из {} чанков", relevantChunks.size());
