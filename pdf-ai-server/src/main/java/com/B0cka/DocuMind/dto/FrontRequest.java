@@ -6,7 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Data
 public class FrontRequest {
 
-    private MultipartFile file;
-    private String docId;
+    private final MultipartFile file;
+    private final String docId;
 
 }

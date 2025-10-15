@@ -31,12 +31,15 @@ public class WebController {
         log.info("получен файл: {}", file.getOriginalFilename());
         log.info("получен ключ: {}", docId);
 
-        FrontRequest request = new FrontRequest();
-        request.setFile(file);
-        request.setDocId(docId);
+        FrontRequest request = new FrontRequest(file, docId);
         webService.loadPDF(request);
 
         return ResponseEntity.ok().body("Файл '" + file.getOriginalFilename() + "' загружен!");
+    }
+
+    @PostMapping(value = "/abstract")
+    public ResponseEntity<String> createAbstract(String request){
+
     }
 
     @PostMapping(value = "/search")
