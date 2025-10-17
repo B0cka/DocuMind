@@ -3,273 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DocuMind - Обработка документов</title>
+    <title>DocuMind — Анализ и Конспектирование</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        /* ---------- Стили остаются прежние ---------- */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color:#EFEDE3; color:#302F2C; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
+        .container { width:100%; max-width:700px; background:white; border-radius:16px; box-shadow:0 4px 25px rgba(0,0,0,0.1); padding:35px; text-align:center; }
+        h1 { margin-bottom:20px; font-weight:600; color:#302F2C; font-size:28px; }
 
-        body {
-            background-color: #EFEDE3;
-            color: #302F2C;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+        /* ---------- Вкладки ---------- */
+        .tabs { display:flex; justify-content:center; gap:10px; margin-bottom:30px; }
+        .tab {
+            padding:10px 20px;
+            border-radius:20px;
+            border:2px solid #302F2C;
+            cursor:pointer;
+            transition:all 0.3s ease;
+            background:rgba(239,237,227,0.2);
         }
+        .tab.active { background-color:#302F2C; color:white; }
 
-        .container {
-            width: 100%;
-            max-width: 700px;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
-            padding: 35px;
-            text-align: center;
-        }
-
-        h1 {
-            margin-bottom: 30px;
-            font-weight: 600;
-            color: #302F2C;
-            font-size: 28px;
-        }
-
-        /* Загрузка файла */
-        .upload-area {
-            border: 2px dashed #302F2C;
-            border-radius: 12px;
-            padding: 45px 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 30px;
-            position: relative;
-            background: rgba(239, 237, 227, 0.2);
-        }
-
-        .upload-area:hover {
-            background-color: rgba(239, 237, 227, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .upload-area i {
-            font-size: 52px;
-            margin-bottom: 18px;
-            color: #302F2C;
-        }
-
-        .upload-area p {
-            margin: 12px 0;
-            color: #302F2C;
-            font-size: 16px;
-        }
-
-        .upload-area .small {
-            font-size: 14px;
-            color: #6B6A67;
-        }
-
-        .upload-area input[type="file"] {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        /* Анимация загрузки */
-        .loading-container {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: 35px 0;
-        }
-
-        .spinner {
-            width: 55px;
-            height: 55px;
-            border: 5px solid rgba(48, 47, 44, 0.2);
-            border-radius: 50%;
-            border-top-color: #302F2C;
-            animation: spin 1s ease-in-out infinite;
-            margin-bottom: 22px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Информация о файле */
-        .file-info {
-            display: none;
-            background-color: rgba(239, 237, 227, 0.3);
-            padding: 18px;
-            border-radius: 12px;
-            margin-top: 25px;
-            text-align: left;
-            position: relative;
-            border: 1px solid #E5E3DC;
-        }
-
-        .file-name {
-            font-weight: 500;
-            margin-right: 40px;
-            word-break: break-all;
-            color: #302F2C;
-            font-size: 16px;
-        }
-
-        .remove-file {
-            position: absolute;
-            right: 18px;
-            top: 18px;
-            background: none;
-            border: none;
-            color: #ff4d4d;
-            cursor: pointer;
-            font-size: 20px;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s;
-        }
-
-        .remove-file:hover {
-            background-color: rgba(255, 77, 77, 0.1);
-        }
-
-        /* Поиск */
-        .search-section {
-            display: none;
-            width: 100%;
-            margin-top: 25px;
-            background: rgba(239, 237, 227, 0.3);
-            padding: 25px;
-            border-radius: 12px;
-            border: 1px solid #E5E3DC;
-        }
-
-        .search-input-container {
-            position: relative;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 16px 95px 16px 20px;
-            border: 2px solid #302F2C;
-            border-radius: 25px;
-            font-size: 16px;
-            background-color: white;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        .search-input:focus {
-            border-color: #4a4946;
-            box-shadow: 0 0 0 3px rgba(48, 47, 44, 0.1);
-        }
-
-        .search-button {
-            position: absolute;
-            right: 6px;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: #302F2C;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background-color 0.3s;
-            height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .search-button:hover {
-            background-color: #4a4946;
-        }
-
-        /* Результаты */
-        .results-container {
-            display: none;
-            margin-top: 25px;
-            text-align: left;
-            background-color: rgba(239, 237, 227, 0.3);
-            padding:
-25px;
-            border-radius: 12px;
-            border: 1px solid #E5E3DC;
-        }
-
-        .results-header {
-            font-size: 18px;
-            font-weight: 600;
-            color: #302F2C;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #302F2C;
-        }
-
-        .result-item {
-            padding: 15px;
-            border-bottom: 1px solid #ddd;
-            background: white;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        .result-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .result-text {
-            color: #302F2C;
-            line-height: 1.5;
-            font-size: 15px;
-        }
-
-        .message {
-            margin-top: 15px;
-            font-weight: 500;
-            color: #302F2C;
-            font-size: 14px;
-            text-align: center;
-        }
-
-        .success {
-            color: #2ecc71;
-        }
-
-        .error {
-            color: #e74c3c;
-        }
-
+        /* Остальные стили оставляем как есть */
+        .upload-area { border:2px dashed #302F2C; border-radius:12px; padding:45px 25px; cursor:pointer; transition:all 0.3s ease; margin-bottom:30px; position:relative; background:rgba(239,237,227,0.2); }
+        .upload-area:hover { background-color:rgba(239,237,227,0.4); transform:translateY(-2px); }
+        .upload-area input[type="file"] { position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer; }
+        .loading-container { display:none; flex-direction:column; align-items:center; justify-content:center; margin:35px 0; }
+        .spinner { width:55px; height:55px; border:5px solid rgba(48,47,44,0.2); border-radius:50%; border-top-color:#302F2C; animation:spin 1s ease-in-out infinite; margin-bottom:22px; }
+        @keyframes spin { to { transform:rotate(360deg);} }
+        .file-info { display:none; background-color:rgba(239,237,227,0.3); padding:18px; border-radius:12px; margin-top:25px; text-align:left; position:relative; border:1px solid #E5E3DC; }
+        .remove-file { position:absolute; right:18px; top:18px; background:none; border:none; color:#ff4d4d; cursor:pointer; font-size:20px; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:background-color 0.2s; }
+        .remove-file:hover { background-color:rgba(255,77,77,0.1); }
+        .search-section { display:none; width:100%; margin-top:25px; background:rgba(239,237,227,0.3); padding:25px; border-radius:12px; border:1px solid #E5E3DC; }
+        .search-input-container { position:relative; width:100%; margin-bottom:20px; }
+        .search-input { width:100%; padding:16px 95px 16px 20px; border:2px solid #302F2C; border-radius:25px; font-size:16px; background-color:white; outline:none; transition:border-color 0.3s; }
+        .search-button { position:absolute; right:6px; top:50%; transform:translateY(-50%); background-color:#302F2C; color:white; border:none; padding:10px 20px; border-radius:20px; cursor:pointer; font-size:14px; font-weight:500; transition:background-color 0.3s; height:38px; display:flex; align-items:center; justify-content:center; }
+        .results-container { display:none; margin-top:25px; text-align:left; background-color:rgba(239,237,227,0.3); padding:25px; border-radius:12px; border:1px solid #E5E3DC; }
+        .result-item { padding:15px; background:white; border-radius:8px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+        .message { margin-top:15px; font-weight:500; text-align:center; }
+        .success { color:#2ecc71; } .error { color:#e74c3c; }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>DocuMind</h1>
 
-    <!-- Загрузка файла -->
+    <div class="tabs">
+        <div class="tab active" id="normalTab">Обычный режим</div>
+        <div class="tab" id="abstractTab">Конспектный режим</div>
+    </div>
+
+    <!-- Основной контент (общий) -->
     <div class="upload-area" id="uploadArea">
         <i>📄</i>
         <p>Перетащите PDF-файл сюда или нажмите для выбора</p>
@@ -277,13 +60,11 @@
         <input type="file" id="fileInput" accept=".pdf">
     </div>
 
-    <!-- Анимация загрузки -->
     <div class="loading-container" id="loadingContainer">
         <div class="spinner"></div>
         <p id="loadingText">Обработка файла...</p>
     </div>
 
-    <!-- Информация о файле -->
     <div class="file-info" id="fileInfo">
         <span class="file-name" id="fileName"></span>
         <button class="remove-file" id="removeFile">×</button>
@@ -291,7 +72,6 @@
 
     <div id="message" class="message"></div>
 
-    <!-- Поиск -->
     <div class="search-section" id="searchSection">
         <div class="search-input-container">
             <input type="text" class="search-input" id="searchInput" placeholder="Введите ваш вопрос...">
@@ -299,17 +79,17 @@
         </div>
     </div>
 
-    <!-- Результаты поиска -->
     <div class="results-container" id="resultsContainer">
-        <div class="results-header">Результаты поиска</div>
+        <div class="results-header">Результаты</div>
         <div id="searchResults"></div>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const fileInput = document.getElementById('fileInput');
+    document.addEventListener('DOMContentLoaded', () => {
+        const tabs = { normal: document.getElementById('normalTab'), abstract: document.getElementById('abstractTab') };
         const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
         const loadingContainer = document.getElementById('loadingContainer');
         const loadingText = document.getElementById('loadingText');
         const fileInfo = document.getElementById('fileInfo');
@@ -321,9 +101,25 @@
         const resultsContainer = document.getElementById('resultsContainer');
         const searchResults = document.getElementById('searchResults');
         const message = document.getElementById('message');
+        const baseUrl = 'http://localhost:8080';
 
+        let mode = 'normal'; // normal | abstract
         let currentFile = null;
-        let docId = null; // <-- хранит docId текущего файла
+        let docId = null;
+
+        // --- Переключение вкладок ---
+        tabs.normal.addEventListener('click', () => switchMode('normal'));
+        tabs.abstract.addEventListener('click', () => switchMode('abstract'));
+
+        function switchMode(m) {
+            mode = m;
+            for (const key in tabs) tabs[key].classList.remove('active');
+            tabs[m].classList.add('active');
+            resetUI();
+            message.textContent = (m === 'normal')
+                ? 'Обычный режим — задавайте конкретные вопросы по документу.'
+                : 'Конспектный режим — создаёт развернутые обобщения и конспекты.';
+        }
 
         function generateUUID() {
             return ([1e7]+-1e3+-4e3+-8e3+-1e11)
@@ -332,134 +128,86 @@
                 );
         }
 
-        const baseUrl = 'http://localhost:8080'; //http://provides-appreciation.gl.at.ply.gg:3154
-
-        fileInput.addEventListener('change', function() {
-            if (this.files && this.files.length > 0) {
-                handleFileUpload(this.files[0]);
-            }
-        });
-
-        uploadArea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            uploadArea.style.backgroundColor = 'rgba(239, 237, 227, 0.4)';
-        });
-
-        uploadArea.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            uploadArea.style.backgroundColor = 'rgba(239, 237, 227, 0.2)';
-        });
-
-        uploadArea.addEventListener('drop', function(e) {
-            e.preventDefault();
-            uploadArea.style.backgroundColor = 'rgba(239, 237, 227, 0.2)';
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                handleFileUpload(e.dataTransfer.files[0]);
-            }
-        });
-
-        removeFile.addEventListener('click', resetFileUpload);
+        fileInput.addEventListener('change', e => e.target.files.length && handleFileUpload(e.target.files[0]));
+        removeFile.addEventListener('click', resetUI);
         searchButton.addEventListener('click', performSearch);
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') performSearch();
-        });
+        searchInput.addEventListener('keypress', e => e.key === 'Enter' && performSearch());
 
         function handleFileUpload(file) {
-            if (file.type !== 'application/pdf') {
-                alert('Пожалуйста, выберите PDF-файл');
-                return;
-            }
+            if (file.type !== 'application/pdf') return alert('Выберите PDF-файл');
             currentFile = file;
-            fileName.textContent = file.name;
+            docId = generateUUID();
 
+            fileName.textContent = file.name;
             uploadArea.style.display = 'none';
             loadingContainer.style.display = 'flex';
-            loadingText.textContent = 'Отправка файла на сервер...';
+            loadingText.textContent = 'Обработка файла...';
 
-            docId = generateUUID(); // генерируем новый docId для каждого файла
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('docId', docId); // <-- передаем docId на бэк
+            formData.append('docId', docId);
 
-            fetch(`${baseUrl}/load-pdf`, {
-                method: 'POST',
-                body: formData,
-                mode: 'cors'
-            })
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                return response.text();
-            })
-            .then(data => {
-                loadingContainer.style.display = 'none';
-                fileInfo.style.display = 'block';
-                searchSection.style.display = 'block';
-                message.textContent = 'Файл успешно загружен! Можете задавать вопросы.';
-                message.className = 'message success';
-            })
-            .catch(error => {
-                loadingContainer.style.display = 'none';
-                message.textContent = 'Ошибка загрузки файла. Проверьте сервер.';
-                message.className = 'message error';
-                uploadArea.style.display = 'block';
-            });
+            const endpoint = mode === 'normal' ? '/load-pdf' : '/abstract-load';
+
+            fetch(`${baseUrl}${endpoint}`, { method: 'POST', body: formData, mode: 'cors' })
+                .then(r => r.text())
+                .then(() => {
+                    loadingContainer.style.display = 'none';
+                    fileInfo.style.display = 'block';
+                    searchSection.style.display = 'block';
+                    message.textContent = 'Файл загружен! Можно задавать вопросы.';
+                    message.className = 'message success';
+                })
+                .catch(() => {
+                    loadingContainer.style.display = 'none';
+                    uploadArea.style.display = 'block';
+                    message.textContent = 'Ошибка загрузки файла.';
+                    message.className = 'message error';
+                });
         }
 
         function performSearch() {
             const query = searchInput.value.trim();
-            if (!query) {
-                alert('Пожалуйста, введите вопрос для поиска');
-                return;
-            }
+            if (!query) return alert('Введите вопрос');
 
             loadingContainer.style.display = 'flex';
-            loadingText.textContent = 'Ищем ответ...';
+            loadingText.textContent = 'Формируем ответ...';
 
-            fetch(`${baseUrl}/search`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-    body: JSON.stringify({ question: query, docId: docId }),
-    mode: 'cors'
-})
-.then(response => response.text())
-.then(data => {
-    loadingContainer.style.display = 'none';
-    displaySearchResults(data);
-    message.textContent = 'Поиск завершен!';
-    message.className = 'message success';
-})
-.catch(error => {
-    loadingContainer.style.display = 'none';
-    message.textContent = 'Ошибка при выполнении поиска. Проверьте сервер.';
-    message.className = 'message error';
-});
+            const endpoint = mode === 'normal' ? '/search' : '/abstract-search';
+
+            fetch(`${baseUrl}${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+                body: JSON.stringify({ question: query, docId }),
+                mode: 'cors'
+            })
+            .then(r => r.text())
+            .then(data => {
+                loadingContainer.style.display = 'none';
+                displayResult(data);
+            })
+            .catch(() => {
+                loadingContainer.style.display = 'none';
+                message.textContent = 'Ошибка при поиске.';
+                message.className = 'message error';
+            });
         }
 
-        function displaySearchResults(result) {
+        function displayResult(result) {
             resultsContainer.style.display = 'block';
-            searchResults.innerHTML = '';
-            if (!result) {
-                searchResults.innerHTML = '<div class="result-item"><p class="result-text">Ничего не найдено</p></div>';
-                return;
-            }
-            const resultElement = document.createElement('div');
-            resultElement.className = 'result-item';
-            resultElement.innerHTML = `<p class="result-text">${result}</p>`;
-            searchResults.appendChild(resultElement);
+            searchResults.innerHTML = `<div class="result-item"><p>${result || 'Ничего не найдено'}</p></div>`;
+            message.textContent = 'Поиск завершён!';
+            message.className = 'message success';
         }
 
-        function resetFileUpload() {
-            currentFile = null;
-            fileInput.value = '';
-            fileName.textContent = '';
-            searchInput.value = '';
-            message.textContent = '';
-            searchResults.innerHTML = '';
+        function resetUI() {
             fileInfo.style.display = 'none';
             searchSection.style.display = 'none';
             resultsContainer.style.display = 'none';
-            loadingContainer.style.display = 'none';
             uploadArea.style.display = 'block';
+            message.textContent = '';
+            searchInput.value = '';
+            searchResults.innerHTML = '';
         }
     });
 </script>

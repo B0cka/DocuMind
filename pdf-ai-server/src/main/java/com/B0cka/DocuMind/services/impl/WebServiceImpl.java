@@ -48,10 +48,12 @@ public class WebServiceImpl implements WebService {
 
     @Value("${api.key}")
     private String apiKey;
+
     @Value("${tesseract.datapath:#{null}}")
     private String tesseractDataPath;
+
     @Override
-    public void loadPDF(FrontRequest request) {
+    public void loadPDF(FrontRequest request, int group) {
         try {
             if (documentRepository.existsById(request.getDocId())) {
                 log.info("Документ {} уже существует, пропускаем обработку", request.getDocId());
@@ -61,7 +63,7 @@ public class WebServiceImpl implements WebService {
             List<String> chunks = chunkTxtFileByParagraphs(txtFile);
             List<String> bigChunks = new ArrayList<>();
 
-            int groupSize = 1;
+            int groupSize = group;
             StringBuilder sb = new StringBuilder();
             int count = 0;
 
@@ -118,14 +120,15 @@ public class WebServiceImpl implements WebService {
             throw new RuntimeException(e);
         }
     }
+
     @Override
-    public String search(FrontSearchRequest frontSearchRequest) {
+    public String search(FrontSearchRequest frontSearchRequest, int limit) {
         try {
 
             ArrayList<String> verbs = analyzeQuestion(frontSearchRequest.getQuestion());
             List<String> relevantChunks = verbs.parallelStream()
                     .map(this::callVectorizeServer)
-                    .flatMap(v -> findSimilarChunks(v, 1, frontSearchRequest.getDocId()).stream())
+                    .flatMap(v -> findSimilarChunks(v, limit, frontSearchRequest.getDocId()).stream())
                     .distinct()
                     .toList();
 
@@ -151,6 +154,96 @@ public class WebServiceImpl implements WebService {
                     Не сокращай и не обобщай — включай даже мелкие детали.
                     Не повторяй одну и ту же мысль разными словами.
                     Пиши академически ясным стилем.
+                    Минимальный объём ответа — 200 слов (если информации достаточно).
+                    Ответ всегда давай на русском языке.
+                    
+                    <|eot_id|><|start_header_id|>user<|end_header_id|>
+                    Контекст (фрагменты из документа):
+                    %s
+                    
+                    Вопрос пользователя:
+                    %s
+                    
+                    <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+                    """.formatted(context, frontSearchRequest.getQuestion());
+
+            log.info("Отправляем запрос к AwanLLM API с контекстом из {} чанков", relevantChunks.size());
+            log.info("Чанки: {}", relevantChunks);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            headers.set("Authorization", "Bearer " + apiKey);
+
+            Map<String, Object> requestMap = new HashMap<>();
+            requestMap.put("model", "Meta-Llama-3.1-70B-Instruct");
+            requestMap.put("prompt", prompt);
+            requestMap.put("max_tokens", 1000);
+            requestMap.put("temperature", 0.1);
+            requestMap.put("stop", Arrays.asList("<|eot_id|>", "<|end_of_text|>"));
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestMap, headers);
+
+            ResponseEntity<Map> awanResponse = restTemplate.exchange(
+                    "https://api.awanllm.com/v1/completions",
+                    HttpMethod.POST,
+                    entity,
+                    Map.class
+            );
+
+            Map<String, Object> responseBody = awanResponse.getBody();
+            if (responseBody != null && responseBody.containsKey("choices")) {
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+                if (!choices.isEmpty()) {
+                    Map<String, Object> firstChoice = choices.get(0);
+                    String answer = (String) firstChoice.get("text");
+                    log.info("Ответ от LLM: {}", answer);
+                    return answer;
+                }
+            }
+
+            throw new RuntimeException("Не удалось получить ответ от AwanLLM API");
+
+        } catch (Exception e) {
+            log.error("Ошибка при поиске: {}", e.getMessage());
+            return "Произошла ошибка при поиске: " + e.getMessage();
+        }
+    }
+
+    @Override
+    public String searchForAbstract(FrontSearchRequest frontSearchRequest, int limit) {
+        try {
+
+            ArrayList<String> verbs = analyzeQuestionForAbstract(frontSearchRequest.getQuestion());
+            List<String> relevantChunks = verbs.parallelStream()
+                    .map(this::callVectorizeServer)
+                    .flatMap(v -> findSimilarChunks(v, limit, frontSearchRequest.getDocId()).stream())
+                    .distinct()
+                    .toList();
+
+            if (relevantChunks.isEmpty()) {
+                return "По вашему вопросу ничего не найдено";
+            }
+
+            String context = String.join("\n\n", relevantChunks);
+            log.info("Чанки, найденные по словам: {}", relevantChunks);
+            String prompt = """
+                    <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+                    Ты — интеллектуальный помощник, который создает конспект исключительно на основе предоставленного контекста.
+                    Твоя задача — находить в тексте все относящиеся к вопросу сведения и формировать ясный, логичный, структурированный развернутый конспект.
+                    
+                    Действуй строго пошагово:
+                    1) Раздели контекст на смысловые части.
+                    2) Из каждой части выпиши все факты, относящиеся к вопросу.
+                    3) Объедини их, избегая потерь информации.
+                    4) Отдай приоритет конкретным данным, цифрам и примерам, а не общим формулировкам.
+                    5) Проверь каждое утверждение — есть ли в контексте прямое подтверждение? 
+                       Если нет — исключи его или укажи, что данных недостаточно.
+                    
+                    Не сокращай и не обобщай — включай даже мелкие детали.
+                    Не повторяй одну и ту же мысль разными словами.
+                    Пиши академически ясным стилем.
+                    Используй отступы и какие то выделения, если это необходимо
                     Минимальный объём ответа — 200 слов (если информации достаточно).
                     Ответ всегда давай на русском языке.
                     
@@ -414,6 +507,63 @@ public class WebServiceImpl implements WebService {
                     Ты — аналитический помощник для системы поиска.
                     Преобразуй вопрос в набор ключевых слов и тематических понятий,
                     которые помогут найти нужные фрагменты текста.
+                    Не пиши объяснений — выведи только слова через запятую, без кавычек и нумерации.
+                
+                    Пример:
+                    Вопрос: Почему Пётр I начал реформы?
+                    Ответ: Пётр I, реформы, Россия, XVIII век, западные идеи, модернизация
+                    <|eot_id|><|start_header_id|>user<|end_header_id|>
+                
+                    Вопрос:
+                    %s
+                """.formatted(string);
+
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + apiKey);
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("model", "Meta-Llama-3.1-70B-Instruct");
+        requestMap.put("prompt", prompt);
+        requestMap.put("max_tokens", 1000);
+        requestMap.put("temperature", 0.1);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestMap, headers);
+        ResponseEntity<Map> awanResponse = restTemplate.exchange(
+                "https://api.awanllm.com/v1/completions",
+                HttpMethod.POST,
+                entity,
+                Map.class
+        );
+
+        Map<String, Object> responseBody = awanResponse.getBody();
+        if (responseBody != null && responseBody.containsKey("choices")) {
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+            if (!choices.isEmpty()) {
+                Map<String, Object> firstChoice = choices.get(0);
+                String answer = (String) firstChoice.get("text");
+
+                log.info("Ответ от LLM: {}", answer);
+
+                return Arrays.stream(answer.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.toCollection(ArrayList::new));
+
+            }
+        }
+        throw new RuntimeException("Не удалось получить ответ от AwanLLM API");
+
+    }
+
+    private ArrayList<String> analyzeQuestionForAbstract(String string) {
+        log.info("Детальный анализ вопроса: {}", string);
+
+        String prompt = """
+                    <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+                    Ты — аналитический помощник для системы создания конспектов.
+                    Преобразуй вопрос в набор ключевых слов и тематических понятий,
+                    которые помогут найти нужные фрагменты текста, постарайся охватить множество понятий вопроса.
                     Не пиши объяснений — выведи только слова через запятую, без кавычек и нумерации.
                 
                     Пример:

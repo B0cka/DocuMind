@@ -32,21 +32,16 @@ public class WebController {
         log.info("получен ключ: {}", docId);
 
         FrontRequest request = new FrontRequest(file, docId);
-        webService.loadPDF(request);
+        webService.loadPDF(request, 2);
 
         return ResponseEntity.ok().body("Файл '" + file.getOriginalFilename() + "' загружен!");
-    }
-
-    @PostMapping(value = "/abstract")
-    public ResponseEntity<String> createAbstract(String request){
-
     }
 
     @PostMapping(value = "/search")
     public ResponseEntity<String> searchAnswer(@RequestBody FrontSearchRequest frontSearchRequest){
         log.info("получен вопрос: {}", frontSearchRequest.getQuestion());
         log.info("получен ключ: {}", frontSearchRequest.getDocId());
-        return ResponseEntity.ok().body(webService.search(frontSearchRequest));
+        return ResponseEntity.ok().body(webService.searchForAbstract(frontSearchRequest, 1));
     }
 
 }
