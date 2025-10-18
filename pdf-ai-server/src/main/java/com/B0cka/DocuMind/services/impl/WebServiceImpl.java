@@ -300,24 +300,13 @@ public class WebServiceImpl implements WebService {
         }
     }
 
-    public List<String> findSimilarChunks(float[] questionVector, int limit, String docId) {
-        try {
-
-            String vectorString = Arrays.toString(questionVector)
-                    .replace("[", "[")
-                    .replace("]", "]");
-
-            List<Object[]> results = webRepository.findSimilarVectors(vectorString, limit, docId);
-
-            return results.stream()
-                    .filter(r -> r.length > 0 && r[0] != null)
-                    .map(r -> (String) r[0])
-                    .toList();
-
-        } catch (Exception e) {
-            log.error("Ошибка при поиске похожих чанков: {}", e.getMessage());
-            return Collections.emptyList();
+    //---------------Tesseract-Server---------------//
+    private boolean isTextInsufficient(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return true;
         }
+        String cleanText = text.replaceAll("\\s+", "");
+        return cleanText.length() < 50;
     }
 
     public File convertPdfToTxtWithOCR(MultipartFile multipartFile) throws IOException {
@@ -364,52 +353,7 @@ public class WebServiceImpl implements WebService {
         }
 
         return txtFile;
-    }
-
-    public List<String> chunkTxtFileByParagraphs(File txtFile) throws IOException {
-        List<String> chunks = new ArrayList<>();
-        StringBuilder textBuilder = new StringBuilder();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(txtFile))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                textBuilder.append(line).append("\n");
-            }
-        }
-
-        String text = textBuilder.toString()
-                .replaceAll("-\\s*\\n\\s*", "")
-                .replaceAll("(?<![\\.\\?\\!])\\n", " ");
-
-        String[] paragraphs = text.split("\\n\\s*\\n");
-
-
-        int sentencesPerChunk = 7;
-        int overlap = 1;
-        for (String paragraph : paragraphs) {
-            paragraph = paragraph.trim();
-            if (paragraph.isEmpty()) continue;
-
-            List<String> sentences = new ArrayList<>();
-            BreakIterator iterator = BreakIterator.getSentenceInstance(Locale.forLanguageTag("ru"));
-            iterator.setText(paragraph);
-            int start = iterator.first();
-            for (int end = iterator.next(); end != BreakIterator.DONE; start = end, end = iterator.next()) {
-                String sentence = paragraph.substring(start, end).trim();
-                if (!sentence.isEmpty()) {
-                    sentences.add(sentence);
-                }
-            }
-
-            for (int i = 0; i < sentences.size(); i += sentencesPerChunk - overlap) {
-                int end = Math.min(i + sentencesPerChunk, sentences.size());
-                String chunk = String.join(" ", sentences.subList(i, end));
-                chunks.add(chunk);
-            }
-        }
-
-        return chunks;
-    }
+    }//method with tesseract implementation :)
 
     private String callTesseractServer(File imageFile) {
         try {
@@ -457,12 +401,70 @@ public class WebServiceImpl implements WebService {
         }
     }
 
-    private boolean isTextInsufficient(String text) {
-        if (text == null || text.trim().isEmpty()) {
-            return true;
+    //-------------Working with document------------//
+    public List<String> findSimilarChunks(float[] questionVector, int limit, String docId) {
+        try {
+
+            String vectorString = Arrays.toString(questionVector)
+                    .replace("[", "[")
+                    .replace("]", "]");
+
+            List<Object[]> results = webRepository.findSimilarVectors(vectorString, limit, docId);
+
+            return results.stream()
+                    .filter(r -> r.length > 0 && r[0] != null)
+                    .map(r -> (String) r[0])
+                    .toList();
+
+        } catch (Exception e) {
+            log.error("Ошибка при поиске похожих чанков: {}", e.getMessage());
+            return Collections.emptyList();
         }
-        String cleanText = text.replaceAll("\\s+", "");
-        return cleanText.length() < 50;
+    }
+
+    public List<String> chunkTxtFileByParagraphs(File txtFile) throws IOException {
+        List<String> chunks = new ArrayList<>();
+        StringBuilder textBuilder = new StringBuilder();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(txtFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                textBuilder.append(line).append("\n");
+            }
+        }
+
+        String text = textBuilder.toString()
+                .replaceAll("-\\s*\\n\\s*", "")
+                .replaceAll("(?<![\\.\\?\\!])\\n", " ");
+
+        String[] paragraphs = text.split("\\n\\s*\\n");
+
+
+        int sentencesPerChunk = 7;
+        int overlap = 1;
+        for (String paragraph : paragraphs) {
+            paragraph = paragraph.trim();
+            if (paragraph.isEmpty()) continue;
+
+            List<String> sentences = new ArrayList<>();
+            BreakIterator iterator = BreakIterator.getSentenceInstance(Locale.forLanguageTag("ru"));
+            iterator.setText(paragraph);
+            int start = iterator.first();
+            for (int end = iterator.next(); end != BreakIterator.DONE; start = end, end = iterator.next()) {
+                String sentence = paragraph.substring(start, end).trim();
+                if (!sentence.isEmpty()) {
+                    sentences.add(sentence);
+                }
+            }
+
+            for (int i = 0; i < sentences.size(); i += sentencesPerChunk - overlap) {
+                int end = Math.min(i + sentencesPerChunk, sentences.size());
+                String chunk = String.join(" ", sentences.subList(i, end));
+                chunks.add(chunk);
+            }
+        }
+
+        return chunks;
     }
 
     private void processChunks(List<String> chunks, String docId) {
@@ -499,6 +501,31 @@ public class WebServiceImpl implements WebService {
         }
     }
 
+    private float[] callVectorizeServer(String str){
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("text", str);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> response = restTemplate.postForObject(
+                "http://localhost:8000/vectorize",
+                requestBody,
+                Map.class
+        );
+
+        if (response == null || !response.containsKey("vector")) {
+            throw new RuntimeException("Не удалось векторизовать вопрос");
+        }
+
+        List<Double> vectorList = (List<Double>) response.get("vector");
+        float[] questionVector = new float[vectorList.size()];
+        for (int i = 0; i < vectorList.size(); i++) {
+            questionVector[i] = vectorList.get(i).floatValue();
+        }
+
+        return questionVector;
+    }
+
+    //------------------Questions------------------//
     private ArrayList<String> analyzeQuestion(String string) {
         log.info("Детальный анализ вопроса: {}", string);
 
@@ -613,27 +640,4 @@ public class WebServiceImpl implements WebService {
 
     }
 
-    private float[] callVectorizeServer(String str){
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("text", str);
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> response = restTemplate.postForObject(
-                "http://localhost:8000/vectorize",
-                requestBody,
-                Map.class
-        );
-
-        if (response == null || !response.containsKey("vector")) {
-            throw new RuntimeException("Не удалось векторизовать вопрос");
-        }
-
-        List<Double> vectorList = (List<Double>) response.get("vector");
-        float[] questionVector = new float[vectorList.size()];
-        for (int i = 0; i < vectorList.size(); i++) {
-            questionVector[i] = vectorList.get(i).floatValue();
-        }
-
-        return questionVector;
-    }
 }
