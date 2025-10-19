@@ -1,0 +1,36 @@
+services:
+
+  cobalt:
+    image: ghcr.io/imputnet/cobalt:11
+    init: true
+    read_only: true
+    restart: unless-stopped
+    container_name: cobalt
+
+    ports:
+      - 1000:1000/tcp
+
+    environment:
+      API_URL: "http://127.0.0.1:1000/"
+      API_KEYS_URL: "file:///keys.json"
+      API_AUTH_REQUIRED: 1
+
+    labels:
+      - com.centurylinklabs.watchtower.scope=cobalt
+
+  watchtower:
+    image: ghcr.io/containrrr/watchtower
+    restart: unless-stopped
+    command: --cleanup --scope cobalt --interval 900 --include-restarting
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./keys.json:/keys.json:ro
+
+
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: whisper-asr
+    ports:
+      - "9000:9000"
+    environment:
+      - WHISPER_MODEL=turbo

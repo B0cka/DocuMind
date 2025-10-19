@@ -1,0 +1,7 @@
+{
+  "f59aa1fc-5ecc-4eaa-8d4e-2329641d08f8": {
+    "limit": "unlimited",
+    "ips": ["0.0.0.0/0"],
+    "userAgents": ["*"]
+  }
+}
