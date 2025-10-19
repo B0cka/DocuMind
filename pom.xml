@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
-        <module>pdf-ai-server</module>
+        <module>documind-core</module>
     </modules>
 
     <parent>

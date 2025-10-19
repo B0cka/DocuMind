@@ -1,4 +1,4 @@
-package com.B0cka.DocuMind;
+package com.B0cka.DocuMind.dto;
 
 import lombok.Data;
 
