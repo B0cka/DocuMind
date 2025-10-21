@@ -20,6 +20,12 @@ public class SearchService {
     @Value("${api.key}")
     private String apiKey;
 
+    @Value("${url}")
+    private String url;
+
+    @Value("${model.name}")
+    private String model;
+
     private final RestTemplate restTemplate;
 
     public ArrayList<String> analyzeQuestion(String string) {
@@ -46,14 +52,14 @@ public class SearchService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Bearer " + apiKey);
         Map<String, Object> requestMap = new HashMap<>();
-        requestMap.put("model", "Meta-Llama-3.1-70B-Instruct");
+        requestMap.put("model", model);
         requestMap.put("prompt", prompt);
         requestMap.put("max_tokens", 1000);
         requestMap.put("temperature", 0.1);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestMap, headers);
         ResponseEntity<Map> awanResponse = restTemplate.exchange(
-                "https://api.awanllm.com/v1/completions",
+                url,
                 HttpMethod.POST,
                 entity,
                 Map.class
@@ -103,14 +109,14 @@ public class SearchService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Bearer " + apiKey);
         Map<String, Object> requestMap = new HashMap<>();
-        requestMap.put("model", "Meta-Llama-3.1-70B-Instruct");
+        requestMap.put("model", model);
         requestMap.put("prompt", prompt);
         requestMap.put("max_tokens", 1000);
         requestMap.put("temperature", 0.1);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestMap, headers);
         ResponseEntity<Map> awanResponse = restTemplate.exchange(
-                "https://api.awanllm.com/v1/completions",
+                url,
                 HttpMethod.POST,
                 entity,
                 Map.class
