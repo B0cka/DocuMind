@@ -43,7 +43,7 @@ public class VectorizationService {
                             .createdAt(Instant.now())
                             .build();
 
-                    webRepository.save(vectorEntity);
+                    webRepository.save(vectorEntity);   
                     log.info("Чанк сохранен: {}", chunk);
                 }
             } catch (Exception e) {

@@ -1,24 +1,27 @@
 package com.B0cka.DocuMind.controller;
 
 import com.B0cka.DocuMind.dto.RequestDto;
+import com.B0cka.DocuMind.service.VideoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 
 @RestController
+@RequestMapping("/video")
 @Slf4j
 @RequiredArgsConstructor
 public class VideoController {
 
-    @PostMapping("/video")
-    public HashMap<Double, String> transformVideo(@RequestBody RequestDto requestDto){
-        log.info("Преобразование видео в текст по ссылке {}", requestDto.getLink());
+    private final VideoService videoService;
 
+    @PostMapping()
+    public ResponseEntity<String> transformVideo(@RequestBody RequestDto dto) {
+        log.info("Получен запрос на трансформацию видео: {}", dto.getLink());
+        videoService.transformVideo(dto);
 
+        return ResponseEntity.ok().body("Видео '" + dto.getLink() + "' загружено!");
     }
-
 }

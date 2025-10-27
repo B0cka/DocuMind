@@ -8,10 +8,10 @@ services:
     container_name: cobalt
 
     ports:
-      - 1000:1000/tcp
+      - 4000:9000/tcp
 
     environment:
-      API_URL: "http://127.0.0.1:1000/"
+      API_URL: "http://127.0.0.1:4000/"
       API_KEYS_URL: "file:///keys.json"
       API_AUTH_REQUIRED: 1
 

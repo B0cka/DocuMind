@@ -15,3 +15,11 @@ CREATE TABLE IF NOT EXISTS documents (
     total_chunks INTEGER,
     uploaded_at TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS video (
+    id BIGSERIAL PRIMARY KEY,
+    vector vector(768) NOT NULL,
+    text TEXT NOT NULL,
+    link VARCHAR(255),
+    started_at DOUBLE NOT NULL
+)
