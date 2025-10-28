@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -35,6 +36,7 @@ public class CobaltServiceImpl implements CobaltService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
             Map<String, Object> requestMap = new HashMap<>();
             requestMap.put("url", link);

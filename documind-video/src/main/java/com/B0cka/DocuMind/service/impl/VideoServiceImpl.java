@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 
 @Service
@@ -26,7 +27,9 @@ public class VideoServiceImpl implements VideoService {
         File audio_file = cobaltService.downloadAudio(requestDto.getLink());
 
         log.info("Расшифровка видео");
-        HashMap<Double, String> result = whisperService.transcribe(audio_file);
+        HashMap<Double, String> result = null;
+        result = whisperService.transcribe(audio_file);
+
         log.info("Ответ нейросети: {}", result.toString());
         vectoriseService.processChunks(result, requestDto.getLink());
 
