@@ -5,42 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DocuMind — Анализ и Конспектирование</title>
     <style>
-        /* ---------- Стили остаются прежние ---------- */
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color:#EFEDE3; color:#302F2C; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
         .container { width:100%; max-width:700px; background:white; border-radius:16px; box-shadow:0 4px 25px rgba(0,0,0,0.1); padding:35px; text-align:center; }
         h1 { margin-bottom:20px; font-weight:600; color:#302F2C; font-size:28px; }
 
-        /* ---------- Вкладки ---------- */
         .tabs { display:flex; justify-content:center; gap:10px; margin-bottom:30px; }
-        .tab {
-            padding:10px 20px;
-            border-radius:20px;
-            border:2px solid #302F2C;
-            cursor:pointer;
-            transition:all 0.3s ease;
-            background:rgba(239,237,227,0.2);
-        }
+        .tab { padding:10px 20px; border-radius:20px; border:2px solid #302F2C; cursor:pointer; transition:all 0.3s ease; background:rgba(239,237,227,0.2); }
         .tab.active { background-color:#302F2C; color:white; }
 
-        /* Остальные стили оставляем как есть */
         .upload-area { border:2px dashed #302F2C; border-radius:12px; padding:45px 25px; cursor:pointer; transition:all 0.3s ease; margin-bottom:30px; position:relative; background:rgba(239,237,227,0.2); }
         .upload-area:hover { background-color:rgba(239,237,227,0.4); transform:translateY(-2px); }
         .upload-area input[type="file"] { position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer; }
+
         .loading-container { display:none; flex-direction:column; align-items:center; justify-content:center; margin:35px 0; }
         .spinner { width:55px; height:55px; border:5px solid rgba(48,47,44,0.2); border-radius:50%; border-top-color:#302F2C; animation:spin 1s ease-in-out infinite; margin-bottom:22px; }
         @keyframes spin { to { transform:rotate(360deg);} }
+
         .file-info { display:none; background-color:rgba(239,237,227,0.3); padding:18px; border-radius:12px; margin-top:25px; text-align:left; position:relative; border:1px solid #E5E3DC; }
         .remove-file { position:absolute; right:18px; top:18px; background:none; border:none; color:#ff4d4d; cursor:pointer; font-size:20px; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:background-color 0.2s; }
         .remove-file:hover { background-color:rgba(255,77,77,0.1); }
+
         .search-section { display:none; width:100%; margin-top:25px; background:rgba(239,237,227,0.3); padding:25px; border-radius:12px; border:1px solid #E5E3DC; }
         .search-input-container { position:relative; width:100%; margin-bottom:20px; }
         .search-input { width:100%; padding:16px 95px 16px 20px; border:2px solid #302F2C; border-radius:25px; font-size:16px; background-color:white; outline:none; transition:border-color 0.3s; }
         .search-button { position:absolute; right:6px; top:50%; transform:translateY(-50%); background-color:#302F2C; color:white; border:none; padding:10px 20px; border-radius:20px; cursor:pointer; font-size:14px; font-weight:500; transition:background-color 0.3s; height:38px; display:flex; align-items:center; justify-content:center; }
+
         .results-container { display:none; margin-top:25px; text-align:left; background-color:rgba(239,237,227,0.3); padding:25px; border-radius:12px; border:1px solid #E5E3DC; }
         .result-item { padding:15px; background:white; border-radius:8px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+
         .message { margin-top:15px; font-weight:500; text-align:center; }
         .success { color:#2ecc71; } .error { color:#e74c3c; }
+
+        .video-input-container { display:none; flex-direction:column; gap:15px; margin-bottom:20px; }
+        .link-input { width:100%; padding:14px 18px; border:2px solid #302F2C; border-radius:25px; font-size:16px; outline:none; }
+        .submit-btn { background-color:#302F2C; color:white; border:none; padding:12px 25px; border-radius:25px; cursor:pointer; font-size:16px; transition:background-color 0.3s; }
+        .submit-btn:hover { background-color:#504e48; }
     </style>
 </head>
 <body>
@@ -50,9 +50,14 @@
     <div class="tabs">
         <div class="tab active" id="normalTab">Обычный режим</div>
         <div class="tab" id="abstractTab">Конспектный режим</div>
+        <div class="tab" id="videoTab">🎬 Видео режим</div>
     </div>
 
-    <!-- Основной контент (общий) -->
+    <div class="video-input-container" id="videoInputContainer">
+        <input type="text" id="videoLink" class="link-input" placeholder="Вставьте ссылку на видео (YouTube)">
+        <button class="submit-btn" id="videoAnalyzeBtn">Анализировать видео</button>
+    </div>
+
     <div class="upload-area" id="uploadArea">
         <i>📄</i>
         <p>Перетащите PDF-файл сюда или нажмите для выбора</p>
@@ -80,14 +85,17 @@
     </div>
 
     <div class="results-container" id="resultsContainer">
-        <div class="results-header">Результаты</div>
         <div id="searchResults"></div>
     </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const tabs = { normal: document.getElementById('normalTab'), abstract: document.getElementById('abstractTab') };
+        const tabs = {
+            normal: document.getElementById('normalTab'),
+            abstract: document.getElementById('abstractTab'),
+            video: document.getElementById('videoTab')
+        };
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const loadingContainer = document.getElementById('loadingContainer');
@@ -103,68 +111,67 @@
         const message = document.getElementById('message');
         const baseUrl = 'http://localhost:8080';
 
-        let mode = 'normal'; // normal | abstract
+        const videoInputContainer = document.getElementById('videoInputContainer');
+        const videoLinkInput = document.getElementById('videoLink');
+        const videoAnalyzeBtn = document.getElementById('videoAnalyzeBtn');
+        let currentVideoLink = null;
+
+        let mode = 'normal';
         let currentFile = null;
         let docId = null;
 
-        // --- Переключение вкладок ---
-        tabs.normal.addEventListener('click', () => switchMode('normal'));
-        tabs.abstract.addEventListener('click', () => switchMode('abstract'));
+        Object.keys(tabs).forEach(key => tabs[key].addEventListener('click', () => switchMode(key)));
 
         function switchMode(m) {
             mode = m;
-            for (const key in tabs) tabs[key].classList.remove('active');
+            Object.values(tabs).forEach(tab => tab.classList.remove('active'));
             tabs[m].classList.add('active');
             resetUI();
-            message.textContent = (m === 'normal')
-                ? 'Обычный режим — задавайте конкретные вопросы по документу.'
-                : 'Конспектный режим — создаёт развернутые обобщения и конспекты.';
+
+            if (m === 'video') {
+                uploadArea.style.display = 'none';
+                videoInputContainer.style.display = 'flex';
+                message.textContent = 'Видео режим — вставьте ссылку на видео.';
+            } else {
+                videoInputContainer.style.display = 'none';
+                uploadArea.style.display = 'block';
+                message.textContent = (m === 'normal')
+                    ? 'Обычный режим — задавайте конкретные вопросы по документу.'
+                    : 'Конспектный режим — создаёт развернутые обобщения и конспекты.';
+            }
         }
 
-        function generateUUID() {
-            return ([1e7]+-1e3+-4e3+-8e3+-1e11)
-                .replace(/[018]/g, c =>
-                    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-                );
-        }
+        videoAnalyzeBtn.addEventListener('click', () => {
+            const link = videoLinkInput.value.trim();
+            if (!link) return alert('Введите ссылку на видео!');
+            currentVideoLink = link;
+
+            loadingContainer.style.display = 'flex';
+            loadingText.textContent = 'Анализируем видео...';
+
+            fetch(`${baseUrl}/video/load-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+                body: JSON.stringify({ link })
+            })
+            .then(r => r.text())
+            .then(text => {
+                loadingContainer.style.display = 'none';
+                message.textContent = text || 'Видео обработано!';
+                message.className = 'message success';
+                searchSection.style.display = 'block';
+            })
+            .catch(() => {
+                loadingContainer.style.display = 'none';
+                message.textContent = 'Ошибка при анализе видео.';
+                message.className = 'message error';
+            });
+        });
 
         fileInput.addEventListener('change', e => e.target.files.length && handleFileUpload(e.target.files[0]));
         removeFile.addEventListener('click', resetUI);
         searchButton.addEventListener('click', performSearch);
         searchInput.addEventListener('keypress', e => e.key === 'Enter' && performSearch());
-
-        function handleFileUpload(file) {
-            if (file.type !== 'application/pdf') return alert('Выберите PDF-файл');
-            currentFile = file;
-            docId = generateUUID();
-
-            fileName.textContent = file.name;
-            uploadArea.style.display = 'none';
-            loadingContainer.style.display = 'flex';
-            loadingText.textContent = 'Обработка файла...';
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('docId', docId);
-
-            const endpoint = mode === 'normal' ? '/load-pdf' : '/abstract-load';
-
-            fetch(`${baseUrl}${endpoint}`, { method: 'POST', body: formData, mode: 'cors' })
-                .then(r => r.text())
-                .then(() => {
-                    loadingContainer.style.display = 'none';
-                    fileInfo.style.display = 'block';
-                    searchSection.style.display = 'block';
-                    message.textContent = 'Файл загружен! Можно задавать вопросы.';
-                    message.className = 'message success';
-                })
-                .catch(() => {
-                    loadingContainer.style.display = 'none';
-                    uploadArea.style.display = 'block';
-                    message.textContent = 'Ошибка загрузки файла.';
-                    message.className = 'message error';
-                });
-        }
 
         function performSearch() {
             const query = searchInput.value.trim();
@@ -173,12 +180,21 @@
             loadingContainer.style.display = 'flex';
             loadingText.textContent = 'Формируем ответ...';
 
-            const endpoint = mode === 'normal' ? '/search' : '/abstract-search';
+            let endpoint;
+            let body;
+
+            if (mode === 'video') {
+                endpoint = '/video/search-video';
+                body = { link: currentVideoLink, question: query };
+            } else {
+                endpoint = mode === 'normal' ? '/search' : '/abstract-search';
+                body = { question: query, docId };
+            }
 
             fetch(`${baseUrl}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-                body: JSON.stringify({ question: query, docId }),
+                body: JSON.stringify(body),
                 mode: 'cors'
             })
             .then(r => r.text())
@@ -204,10 +220,36 @@
             fileInfo.style.display = 'none';
             searchSection.style.display = 'none';
             resultsContainer.style.display = 'none';
-            uploadArea.style.display = 'block';
+            uploadArea.style.display = (mode !== 'video') ? 'block' : 'none';
             message.textContent = '';
             searchInput.value = '';
             searchResults.innerHTML = '';
+        }
+
+        function handleFileUpload(file) {
+            currentFile = file;
+            fileName.textContent = file.name;
+            fileInfo.style.display = 'block';
+            loadingContainer.style.display = 'flex';
+            loadingText.textContent = 'Загружаем файл...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch(`${baseUrl}/upload`, { method: 'POST', body: formData })
+                .then(response => response.text())
+                .then(id => {
+                    docId = id;
+                    loadingContainer.style.display = 'none';
+                    message.textContent = 'Файл успешно загружен!';
+                    message.className = 'message success';
+                    searchSection.style.display = 'block';
+                })
+                .catch(() => {
+                    loadingContainer.style.display = 'none';
+                    message.textContent = 'Ошибка при загрузке файла.';
+                    message.className = 'message error';
+                });
         }
     });
 </script>

@@ -22,4 +22,4 @@ CREATE TABLE IF NOT EXISTS video (
     text TEXT NOT NULL,
     link VARCHAR(255),
     started_at DOUBLE NOT NULL
-)
+);
