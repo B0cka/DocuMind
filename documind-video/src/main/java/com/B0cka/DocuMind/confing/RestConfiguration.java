@@ -17,7 +17,6 @@ public class RestConfiguration {
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
         RestTemplate restTemplate = builder.build();
 
-        // создаём Jackson-конвертер, который умеет обрабатывать и text/plain, и application/json
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         List<MediaType> types = new ArrayList<>(converter.getSupportedMediaTypes());
         types.add(MediaType.TEXT_PLAIN);

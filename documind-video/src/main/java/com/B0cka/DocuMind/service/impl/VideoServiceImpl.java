@@ -1,6 +1,9 @@
 package com.B0cka.DocuMind.service.impl;
 
 import com.B0cka.DocuMind.dto.RequestDto;
+import com.B0cka.DocuMind.dto.SearchRequestDto;
+import com.B0cka.DocuMind.service.SearchService;
+import com.B0cka.DocuMind.service.VectoriseService;
 import com.B0cka.DocuMind.service.VideoService;
 import com.B0cka.DocuMind.service.WhisperService;
 import lombok.RequiredArgsConstructor;
@@ -8,18 +11,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-
 public class VideoServiceImpl implements VideoService {
 
     private final CobaltServiceImpl cobaltService;
     private final WhisperService whisperService;
     private final VectoriseService vectoriseService;
+    private final SearchService searchService;
 
     @Override
     public void transformVideo(RequestDto requestDto){
@@ -34,6 +37,21 @@ public class VideoServiceImpl implements VideoService {
         vectoriseService.processChunks(result, requestDto.getLink());
 
     }
+
+    @Override
+    public String searchVideo(SearchRequestDto dto){
+        log.info("Поиск видео по ссылке {}", dto.getLink());
+        if(vectoriseService.searchByString(dto.getLink()).isEmpty()){
+            return "Нет такого обработанного видео";
+        }
+
+        List<String> keywords = searchService.analyzeQuestion(dto.getQuestion());
+        float[] questionVector = vectoriseService.callVectorizeServer(String.join(" ", keywords));
+        List<String> relevantChunks = vectoriseService.findSimilarChunks(questionVector, 1, dto.getLink());
+
+        return searchService.search(relevantChunks, dto.getQuestion());
+
+        }
 
 
 }

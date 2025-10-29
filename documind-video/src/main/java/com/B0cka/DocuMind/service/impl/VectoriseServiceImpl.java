@@ -2,6 +2,7 @@ package com.B0cka.DocuMind.service.impl;
 
 import com.B0cka.DocuMind.model.Video;
 import com.B0cka.DocuMind.repository.VideoRepository;
+import com.B0cka.DocuMind.service.VectoriseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,20 +10,20 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.Instant;
 import java.util.*;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 @PropertySource("application.properties")
-public class VectoriseService {
+public class VectoriseServiceImpl implements VectoriseService {
 
     @Value("${vectorise.url}")
     private String vectoriseUrl;
     private final RestTemplate restTemplate;
     private final VideoRepository videoRepository;
 
+    @Override
     public float[] callVectorizeServer(String str){
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("text", str);
@@ -47,6 +48,7 @@ public class VectoriseService {
         return questionVector;
     }
 
+    @Override
     public List<String> findSimilarChunks(float[] questionVector, int limit, String docId) {
         try {
 
@@ -67,6 +69,7 @@ public class VectoriseService {
         }
     }
 
+    @Override
     public void processChunks(HashMap<Double, String> chunks, String docId) {
         for (Map.Entry<Double,String> chunk : chunks.entrySet()) {
             try {
@@ -99,5 +102,10 @@ public class VectoriseService {
                 log.error("Ошибка при обработке чанка {}: {}", chunk, e.getMessage());
             }
         }
+    }
+
+    @Override
+    public Optional<Video> searchByString(String link){
+        return videoRepository.findByLink(link);
     }
 }

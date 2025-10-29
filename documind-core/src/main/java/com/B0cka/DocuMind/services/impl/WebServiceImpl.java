@@ -9,10 +9,13 @@ import com.B0cka.DocuMind.services.document.PdfProcessingService;
 import com.B0cka.DocuMind.services.search.SearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +47,7 @@ public class WebServiceImpl implements WebService {
         float[] questionVector = vectorizationService.callVectorizeServer(String.join(" ", keywords));
         List<String> relevantChunks = vectorizationService.findSimilarChunks(questionVector, limit, request.getDocId());
 
-        return String.join("\n\n", relevantChunks);
+        return searchService.search(relevantChunks, request.getQuestion());
     }
 
     @Override
@@ -53,6 +56,6 @@ public class WebServiceImpl implements WebService {
         float[] questionVector = vectorizationService.callVectorizeServer(String.join(" ", keywords));
         List<String> relevantChunks = vectorizationService.findSimilarChunks(questionVector, limit, request.getDocId());
 
-        return String.join("\n\n", relevantChunks);
+        return searchService.searchForAbstract(relevantChunks, request.getQuestion());
     }
 }

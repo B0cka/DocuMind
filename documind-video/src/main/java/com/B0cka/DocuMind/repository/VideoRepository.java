@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface VideoRepository extends JpaRepository<Video, Long> {
@@ -20,4 +21,5 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
                                       @Param("limit") int limit,
                                       @Param("link") String link);
 
+    Optional<Video> findByLink(String link);
 }
