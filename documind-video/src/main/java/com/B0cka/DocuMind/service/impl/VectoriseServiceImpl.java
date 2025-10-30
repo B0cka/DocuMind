@@ -104,8 +104,4 @@ public class VectoriseServiceImpl implements VectoriseService {
         }
     }
 
-    @Override
-    public Optional<Video> searchByString(String link){
-        return videoRepository.findByLink(link);
-    }
 }

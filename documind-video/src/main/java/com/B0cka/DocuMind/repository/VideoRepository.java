@@ -21,5 +21,4 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
                                       @Param("limit") int limit,
                                       @Param("link") String link);
 
-    Optional<Video> findByLink(String link);
 }

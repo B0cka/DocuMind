@@ -8,12 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 
 @RestController
 @RequestMapping("/video")
 @Slf4j
 @RequiredArgsConstructor
+@CrossOrigin(origins = {"http://127.0.0.1:5500"})
 public class VideoController {
 
     private final VideoService videoService;
@@ -26,7 +26,7 @@ public class VideoController {
         return ResponseEntity.ok().body("Видео '" + dto.getLink() + "' загружено!");
     }
 
-    @PostMapping("search-video")
+    @PostMapping("/search-video")
     public ResponseEntity<String> searchFromVideo(@RequestBody SearchRequestDto dto){
         log.info("Получен запрос на трансформацию видео: {}", dto.getLink());
 

@@ -41,9 +41,6 @@ public class VideoServiceImpl implements VideoService {
     @Override
     public String searchVideo(SearchRequestDto dto){
         log.info("Поиск видео по ссылке {}", dto.getLink());
-        if(vectoriseService.searchByString(dto.getLink()).isEmpty()){
-            return "Нет такого обработанного видео";
-        }
 
         List<String> keywords = searchService.analyzeQuestion(dto.getQuestion());
         float[] questionVector = vectoriseService.callVectorizeServer(String.join(" ", keywords));
