@@ -1,4 +1,4 @@
-package com.B0cka.DocuMind.service;
+package com.B0cka.DocuMind.service.video_serv;
 
 import com.B0cka.DocuMind.dto.RequestDto;
 import com.B0cka.DocuMind.dto.SearchRequestDto;

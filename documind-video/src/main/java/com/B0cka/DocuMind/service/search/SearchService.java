@@ -1,4 +1,4 @@
-package com.B0cka.DocuMind.service;
+package com.B0cka.DocuMind.service.search;
 
 import java.util.ArrayList;
 import java.util.List;

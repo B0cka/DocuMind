@@ -1,8 +1,7 @@
-package com.B0cka.DocuMind.service.impl;
+package com.B0cka.DocuMind.service.vectorise;
 
 import com.B0cka.DocuMind.model.Video;
 import com.B0cka.DocuMind.repository.VideoRepository;
-import com.B0cka.DocuMind.service.VectoriseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,11 +50,12 @@ public class VectoriseServiceImpl implements VectoriseService {
     @Override
     public List<String> findSimilarChunks(float[] questionVector, int limit, String docId) {
         try {
-
+            log.info("Поиск по чанкам");
             String vectorString = Arrays.toString(questionVector)
                     .replace("[", "[")
                     .replace("]", "]");
 
+            log.info("QuestionVector = {}", vectorString);
             List<Object[]> results = videoRepository.findSimilarVectors(vectorString, limit, docId);
 
             return results.stream()

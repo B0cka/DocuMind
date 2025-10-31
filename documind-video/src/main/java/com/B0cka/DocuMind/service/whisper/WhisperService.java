@@ -1,4 +1,4 @@
-package com.B0cka.DocuMind.service;
+package com.B0cka.DocuMind.service.whisper;
 
 import java.io.File;
 import java.util.HashMap;

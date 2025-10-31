@@ -1,11 +1,11 @@
-package com.B0cka.DocuMind.service.impl;
+package com.B0cka.DocuMind.service.video_serv;
 
 import com.B0cka.DocuMind.dto.RequestDto;
 import com.B0cka.DocuMind.dto.SearchRequestDto;
-import com.B0cka.DocuMind.service.SearchService;
-import com.B0cka.DocuMind.service.VectoriseService;
-import com.B0cka.DocuMind.service.VideoService;
-import com.B0cka.DocuMind.service.WhisperService;
+import com.B0cka.DocuMind.service.search.SearchService;
+import com.B0cka.DocuMind.service.vectorise.VectoriseService;
+import com.B0cka.DocuMind.service.whisper.WhisperService;
+import com.B0cka.DocuMind.service.cobalt.CobaltServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

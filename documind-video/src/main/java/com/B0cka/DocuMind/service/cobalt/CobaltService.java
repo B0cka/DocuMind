@@ -1,4 +1,4 @@
-package com.B0cka.DocuMind.service;
+package com.B0cka.DocuMind.service.cobalt;
 
 import java.io.File;
 

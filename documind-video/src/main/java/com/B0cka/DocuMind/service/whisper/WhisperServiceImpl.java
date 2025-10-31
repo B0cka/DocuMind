@@ -1,8 +1,7 @@
-package com.B0cka.DocuMind.service.impl;
+package com.B0cka.DocuMind.service.whisper;
 
 import com.B0cka.DocuMind.dto.WhisperResponse;
 import com.B0cka.DocuMind.dto.WhisperSegment;
-import com.B0cka.DocuMind.service.WhisperService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,4 +1,4 @@
-package com.B0cka.DocuMind.service;
+package com.B0cka.DocuMind.service.vectorise;
 
 import java.util.HashMap;
 import java.util.List;

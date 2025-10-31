@@ -2,7 +2,7 @@ package com.B0cka.DocuMind.controller;
 
 import com.B0cka.DocuMind.dto.RequestDto;
 import com.B0cka.DocuMind.dto.SearchRequestDto;
-import com.B0cka.DocuMind.service.VideoService;
+import com.B0cka.DocuMind.service.video_serv.VideoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
