@@ -43,6 +43,7 @@ public class VideoServiceImpl implements VideoService {
         log.info("Поиск видео по ссылке {}", dto.getLink());
 
         List<String> keywords = searchService.analyzeQuestion(dto.getQuestion());
+        //problems
         float[] questionVector = vectoriseService.callVectorizeServer(String.join(" ", keywords));
         List<String> relevantChunks = vectoriseService.findSimilarChunks(questionVector, 1, dto.getLink());
 
