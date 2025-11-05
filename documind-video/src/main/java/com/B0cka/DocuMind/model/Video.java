@@ -20,6 +20,14 @@ import java.time.Instant;
 @AllArgsConstructor
 public class Video {
 
+    public Video(Long id, String link, Double startedAt, String text, float[] vector) {
+        this.id = id;
+        this.link = link;
+        this.startedAt = startedAt;
+        this.text = text;
+        this.vector = vector;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

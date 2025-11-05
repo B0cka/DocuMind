@@ -1,12 +1,11 @@
 package com.B0cka.DocuMind.services.search;
 
+import com.B0cka.DocuMind.llm.LlmClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,7 +25,7 @@ public class SearchService {
     @Value("${model.name}")
     private String model;
 
-    private final RestTemplate restTemplate;
+    private final LlmClient llmClient;
 
     public ArrayList<String> analyzeQuestion(String string) {
         log.info("Детальный анализ вопроса: {}", string);
@@ -48,40 +47,14 @@ public class SearchService {
                 """.formatted(string);
 
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", "Bearer " + apiKey);
-        Map<String, Object> requestMap = new HashMap<>();
-        requestMap.put("model", model);
-        requestMap.put("prompt", prompt);
-        requestMap.put("max_tokens", 1000);
-        requestMap.put("temperature", 0.1);
+        String answer = llmClient.sendPrompt(prompt);
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestMap, headers);
-        ResponseEntity<Map> awanResponse = restTemplate.exchange(
-                url,
-                HttpMethod.POST,
-                entity,
-                Map.class
-        );
+        log.info("Ответ от LLM: {}", answer);
 
-        Map<String, Object> responseBody = awanResponse.getBody();
-        if (responseBody != null && responseBody.containsKey("choices")) {
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
-            if (!choices.isEmpty()) {
-                Map<String, Object> firstChoice = choices.get(0);
-                String answer = (String) firstChoice.get("text");
-
-                log.info("Ответ от LLM: {}", answer);
-
-                return Arrays.stream(answer.split(","))
-                        .map(String::trim)
-                        .filter(s -> !s.isEmpty())
-                        .collect(Collectors.toCollection(ArrayList::new));
-
-            }
-        }
-        throw new RuntimeException("Не удалось получить ответ от AwanLLM API");
+        return Arrays.stream(answer.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toCollection(ArrayList::new));
 
     }
 
@@ -105,40 +78,15 @@ public class SearchService {
                 """.formatted(string);
 
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", "Bearer " + apiKey);
-        Map<String, Object> requestMap = new HashMap<>();
-        requestMap.put("model", model);
-        requestMap.put("prompt", prompt);
-        requestMap.put("max_tokens", 1000);
-        requestMap.put("temperature", 0.1);
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestMap, headers);
-        ResponseEntity<Map> awanResponse = restTemplate.exchange(
-                url,
-                HttpMethod.POST,
-                entity,
-                Map.class
-        );
+        String answer = llmClient.sendPrompt(prompt);
 
-        Map<String, Object> responseBody = awanResponse.getBody();
-        if (responseBody != null && responseBody.containsKey("choices")) {
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
-            if (!choices.isEmpty()) {
-                Map<String, Object> firstChoice = choices.get(0);
-                String answer = (String) firstChoice.get("text");
+        log.info("Ответ от LLM: {}", answer);
 
-                log.info("Ответ от LLM: {}", answer);
-
-                return Arrays.stream(answer.split(","))
-                        .map(String::trim)
-                        .filter(s -> !s.isEmpty())
-                        .collect(Collectors.toCollection(ArrayList::new));
-
-            }
-        }
-        throw new RuntimeException("Не удалось получить ответ от AwanLLM API");
+        return Arrays.stream(answer.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toCollection(ArrayList::new));
 
     }
 
@@ -180,30 +128,7 @@ public class SearchService {
             log.info("Отправляем запрос к AwanLLM API с контекстом из {} чанков", relevantChunks.size());
             log.info("Чанки: {}", relevantChunks);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Bearer " + apiKey);
-            Map<String, Object> requestMap = new HashMap<>();
-            requestMap.put("model", "Meta-Llama-3.1-70B-Instruct");
-            requestMap.put("prompt", prompt);
-            requestMap.put("max_tokens", 1000);
-            requestMap.put("temperature", 0.1);
-            requestMap.put("stop", Arrays.asList("<|eot_id|>", "<|end_of_text|>"));
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestMap, headers);
-
-            ResponseEntity<Map> awanResponse = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
-            Map<String, Object> responseBody = awanResponse.getBody();
-            if (responseBody != null && responseBody.containsKey("choices")) {
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
-                if (!choices.isEmpty()) {
-                    Map<String, Object> firstChoice = choices.get(0);
-                    String answer = (String) firstChoice.get("text");
-                    log.info("Ответ от LLM: {}", answer);
-                    return answer;
-                }
-            }
-            throw new RuntimeException("Не удалось получить ответ от AwanLLM API");
+            return llmClient.sendPrompt(prompt);
 
         } catch (Exception e) {
             log.error("Ошибка при поиске: {}", e.getMessage());
@@ -250,35 +175,7 @@ public class SearchService {
             log.info("Отправляем запрос к AwanLLM API с контекстом из {} чанков", relevantChunks.size());
             log.info("Чанки: {}", relevantChunks);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Bearer " + apiKey);
-            Map<String, Object> requestMap = new HashMap<>();
-            requestMap.put("model", "Meta-Llama-3.1-70B-Instruct");
-            requestMap.put("prompt", prompt);
-            requestMap.put("max_tokens", 1000);
-            requestMap.put("temperature", 0.1);
-            requestMap.put("stop", Arrays.asList("<|eot_id|>", "<|end_of_text|>"));
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestMap, headers);
-
-            ResponseEntity<Map> awanResponse = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
-            Map<String, Object> responseBody = awanResponse.getBody();
-
-            if (responseBody != null && responseBody.containsKey("choices")) {
-
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
-
-                if (!choices.isEmpty()) {
-                    Map<String, Object> firstChoice = choices.get(0);
-                    String answer = (String) firstChoice.get("text");
-
-                    log.info("Ответ от LLM: {}", answer);
-
-                    return answer;
-                }
-            }
-
-            throw new RuntimeException("Не удалось получить ответ от AwanLLM API");
+            return llmClient.sendPrompt(prompt);
 
         } catch (Exception e) {
             log.error("Ошибка при поиске: {}", e.getMessage());
