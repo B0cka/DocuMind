@@ -4,7 +4,7 @@ import com.B0cka.DocuMind.models.Vectors;
 import com.B0cka.DocuMind.reposiroty.WebRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -18,6 +18,7 @@ public class VectorizationService {
     private final RestTemplate restTemplate;
     private final WebRepository webRepository;
 
+    @Async
     public void processChunks(List<String> chunks, String docId) {
         for (String chunk : chunks) {
             try {

@@ -1,7 +1,6 @@
 package com.B0cka.DocuMind.llm;
 
 import com.B0cka.DocuMind.dto.OpenRouterResponse;
-import com.B0cka.DocuMind.service.llm.LlmClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

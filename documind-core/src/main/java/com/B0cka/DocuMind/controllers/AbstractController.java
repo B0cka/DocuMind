@@ -13,8 +13,9 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://127.0.0.1:5500"})
+@CrossOrigin(origins = {"http://127.0.0.1:5050"})
 public class AbstractController {
+
 
     private final WebService webService;
 

@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -43,9 +44,13 @@ public class VideoServiceImpl implements VideoService {
         log.info("Поиск видео по ссылке {}", dto.getLink());
 
         List<String> keywords = searchService.analyzeQuestion(dto.getQuestion());
-        //problems
-        float[] questionVector = vectoriseService.callVectorizeServer(String.join(" ", keywords));
-        List<String> relevantChunks = vectoriseService.findSimilarChunks(questionVector, 1, dto.getLink());
+        List<String> relevantChunks = new ArrayList<>();
+
+        for(String s : keywords) {
+            float[] questionVector = vectoriseService.callVectorizeServer(s);
+            List<String> v = vectoriseService.findSimilarChunks(questionVector, 1, dto.getLink());
+            relevantChunks.addAll(v);
+        }
 
         return searchService.search(relevantChunks, dto.getQuestion());
 

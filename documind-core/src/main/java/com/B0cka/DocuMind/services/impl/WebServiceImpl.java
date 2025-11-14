@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -44,17 +45,25 @@ public class WebServiceImpl implements WebService {
     @Override
     public String search(FrontSearchRequest request, int limit) {
         List<String> keywords = searchService.analyzeQuestion(request.getQuestion());
-        float[] questionVector = vectorizationService.callVectorizeServer(String.join(" ", keywords));
-        List<String> relevantChunks = vectorizationService.findSimilarChunks(questionVector, limit, request.getDocId());
-
+        List<String> relevantChunks = new ArrayList<>();
+        for(String s : keywords) {
+            float[] questionVector = vectorizationService.callVectorizeServer(s);
+            List<String> v = vectorizationService.findSimilarChunks(questionVector, limit, request.getDocId());
+            relevantChunks.addAll(v);
+        }
         return searchService.search(relevantChunks, request.getQuestion());
     }
 
     @Override
     public String searchForAbstract(FrontSearchRequest request, int limit) {
         List<String> keywords = searchService.analyzeQuestionForAbstract(request.getQuestion());
-        float[] questionVector = vectorizationService.callVectorizeServer(String.join(" ", keywords));
-        List<String> relevantChunks = vectorizationService.findSimilarChunks(questionVector, limit, request.getDocId());
+        List<String> relevantChunks = new ArrayList<>();
+
+        for(String s : keywords) {
+            float[] questionVector = vectorizationService.callVectorizeServer(s);
+            List<String> v = vectorizationService.findSimilarChunks(questionVector, limit, request.getDocId());
+            relevantChunks.addAll(v);
+        }
 
         return searchService.searchForAbstract(relevantChunks, request.getQuestion());
     }

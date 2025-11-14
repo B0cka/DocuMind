@@ -1,5 +1,5 @@
-
 CREATE EXTENSION IF NOT EXISTS vector;
+
 CREATE TABLE IF NOT EXISTS vectors (
     id BIGSERIAL PRIMARY KEY,
     vector vector(768) NOT NULL,
@@ -22,5 +22,5 @@ CREATE TABLE IF NOT EXISTS video (
     vector vector(768) NOT NULL,
     text TEXT NOT NULL,
     link VARCHAR(255),
-    started_at DOUBLE NOT NULL
+    started_at DOUBLE PRECISION NOT NULL
 );
