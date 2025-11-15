@@ -34,6 +34,8 @@ public class VideoServiceImpl implements VideoService {
         HashMap<Double, String> result = null;
         result = whisperService.transcribe(audio_file);
 
+        //требуется переработка
+
         log.info("Ответ нейросети: {}", result.toString());
         vectoriseService.processChunks(result, requestDto.getLink());
 
