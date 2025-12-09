@@ -70,10 +70,10 @@ public class VectoriseServiceImpl implements VectoriseService {
     }
 
     @Override
-    public void processChunks(HashMap<Double, String> chunks, String docId) {
-        for (Map.Entry<Double,String> chunk : chunks.entrySet()) {
+    public void processChunks(List<String> chunks, String docId) {
+        for (String chunk : chunks) {
             try {
-                Map<String, String> requestBody = Map.of("text", chunk.getValue());
+                Map<String, String> requestBody = Map.of("text", chunk);
 
                 Map<String, Object> response = restTemplate.postForObject(
                         "http://localhost:8000/vectorize",
@@ -91,8 +91,7 @@ public class VectoriseServiceImpl implements VectoriseService {
                     Video vectorEntity = Video.builder()
                             .vector(vectorArray)
                             .link(docId)
-                            .text(chunk.getValue())
-                            .startedAt(chunk.getKey())
+                            .text(chunk)
                             .build();
 
                     videoRepository.save(vectorEntity);

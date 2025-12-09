@@ -2,6 +2,7 @@ package com.B0cka.DocuMind.service.video_serv;
 
 import com.B0cka.DocuMind.dto.RequestDto;
 import com.B0cka.DocuMind.dto.SearchRequestDto;
+import com.B0cka.DocuMind.service.llm.LlmService;
 import com.B0cka.DocuMind.service.search.SearchService;
 import com.B0cka.DocuMind.service.vectorise.VectoriseService;
 import com.B0cka.DocuMind.service.whisper.WhisperService;
@@ -24,39 +25,38 @@ public class VideoServiceImpl implements VideoService {
     private final WhisperService whisperService;
     private final VectoriseService vectoriseService;
     private final SearchService searchService;
+    private final LlmService llmService;
 
     @Override
-    public void transformVideo(RequestDto requestDto){
+    public void transformVideo(RequestDto requestDto) {
         log.info("Загрузка видео через ссылку {}", requestDto.getLink());
-        File audio_file = cobaltService.downloadAudio(requestDto.getLink());
+        File audioFile = cobaltService.downloadAudio(requestDto.getLink());
 
-        log.info("Расшифровка видео");
-        HashMap<Double, String> result = null;
-        result = whisperService.transcribe(audio_file);
+        log.info("Расшифровка аудио через Whisper");
+        String rawText = whisperService.transcribe(audioFile);
 
-        //требуется переработка
+        log.info("Отправка транскрипта в LLM для смыслового разбиения");
+        List<String> chunks = llmService.chunkText(rawText);
 
-        log.info("Ответ нейросети: {}", result.toString());
-        vectoriseService.processChunks(result, requestDto.getLink());
-
+        log.info("Получено {} чанков, передаём их в VectoriseService", chunks.size());
+        vectoriseService.processChunks(chunks, requestDto.getLink());
     }
 
     @Override
-    public String searchVideo(SearchRequestDto dto){
+    public String searchVideo(SearchRequestDto dto) {
         log.info("Поиск видео по ссылке {}", dto.getLink());
 
         List<String> keywords = searchService.analyzeQuestion(dto.getQuestion());
         List<String> relevantChunks = new ArrayList<>();
 
-        for(String s : keywords) {
+        for (String s : keywords) {
             float[] questionVector = vectoriseService.callVectorizeServer(s);
             List<String> v = vectoriseService.findSimilarChunks(questionVector, 1, dto.getLink());
             relevantChunks.addAll(v);
         }
-
         return searchService.search(relevantChunks, dto.getQuestion());
 
-        }
+    }
 
 
 }

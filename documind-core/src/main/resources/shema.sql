@@ -22,5 +22,4 @@ CREATE TABLE IF NOT EXISTS video (
     vector vector(768) NOT NULL,
     text TEXT NOT NULL,
     link VARCHAR(255),
-    started_at DOUBLE PRECISION NOT NULL
 );

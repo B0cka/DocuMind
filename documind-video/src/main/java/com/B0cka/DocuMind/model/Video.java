@@ -9,8 +9,6 @@ import org.hibernate.annotations.Array;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.Instant;
-
 
 @Entity
 @Table(name = "video")
@@ -20,10 +18,9 @@ import java.time.Instant;
 @AllArgsConstructor
 public class Video {
 
-    public Video(Long id, String link, Double startedAt, String text, float[] vector) {
+    public Video(Long id, String link, String text, float[] vector) {
         this.id = id;
         this.link = link;
-        this.startedAt = startedAt;
         this.text = text;
         this.vector = vector;
     }
@@ -40,9 +37,6 @@ public class Video {
     @Column(columnDefinition = "TEXT")
     private String text;
 
-    @Column
-    private Double startedAt;
-    
     @Column(name = "link")
     private String link;
 }

@@ -27,7 +27,7 @@ public class WhisperServiceImpl implements WhisperService {
     private String whisperUrl;
 
     @Override
-    public HashMap<Double, String> transcribe(File audioFile) {
+    public String transcribe(File audioFile) {
         log.info("Обработка файла: {} через Whisper", audioFile.getName());
 
         HttpHeaders headers = new HttpHeaders();
@@ -52,11 +52,7 @@ public class WhisperServiceImpl implements WhisperService {
         }
 
         WhisperResponse whisperResponse = response.getBody();
-        HashMap<Double, String> result = new HashMap<>();
-
-        for (WhisperSegment segment : whisperResponse.getSegments()) {
-            result.put(segment.getStart(), segment.getText());
-        }
+        String result = whisperResponse.getText();
 
         log.info("Whisper вернул {} сегментов", whisperResponse.getSegments().size());
         return result;

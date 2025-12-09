@@ -9,6 +9,6 @@ public interface VectoriseService {
 
     List<String> findSimilarChunks(float[] questionVector, int limit, String docId);
 
-    void processChunks(HashMap<Double, String> chunks, String docId);
+    void processChunks(List<String> chunks, String docId);
 
 }
