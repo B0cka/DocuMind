@@ -1,12 +1,8 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
-CREATE TABLE IF NOT EXISTS vectors (
-    id BIGSERIAL PRIMARY KEY,
-    vector vector(768) NOT NULL,
-    text TEXT NOT NULL,
-    doc_id VARCHAR(255) REFERENCES documents(id),
-    metadata JSONB,
-);
+DROP TABLE IF EXISTS video_chunks CASCADE;
+DROP TABLE IF EXISTS vectors CASCADE;
+DROP TABLE IF EXISTS documents CASCADE;
 
 CREATE TABLE IF NOT EXISTS documents (
     id VARCHAR(255) PRIMARY KEY,
@@ -16,10 +12,18 @@ CREATE TABLE IF NOT EXISTS documents (
     total_chunks INTEGER,
     uploaded_at TIMESTAMP
 );
-
-CREATE TABLE IF NOT EXISTS video (
+CREATE TABLE IF NOT EXISTS vectors (
     id BIGSERIAL PRIMARY KEY,
-    vector vector(768) NOT NULL,
+    vector vector(384) NOT NULL,
     text TEXT NOT NULL,
+    doc_id VARCHAR(255) REFERENCES documents(id)
+);
+
+CREATE TABLE video_chunks (
+    id BIGSERIAL PRIMARY KEY,
     link VARCHAR(255),
+    text TEXT,
+    vector vector(384),
+    start_time DOUBLE PRECISION,
+    end_time DOUBLE PRECISION
 );

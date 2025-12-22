@@ -33,15 +33,5 @@ services:
     ports:
       - "9000:9000"
     environment:
-      - WHISPER_MODEL=turbo
+      - WHISPER_MODEL=distil-large-v3
 
-  languagetool:
-    image: erikvl87/languagetool:latest
-    container_name: languagetool
-    restart: unless-stopped
-    ports:
-      - "8010:8010"
-    environment:
-      Java_Xms: "512m"
-      Java_Xmx: "2g"
-      langtool_pipelinePrewarming: "true"

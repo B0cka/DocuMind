@@ -79,9 +79,14 @@
 
     <build>
         <resources>
+            <!-- 2. Ресурсы, которые НЕЛЬЗЯ фильтровать (бинарники) -->
             <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
+                <directory>src/main/resources/tessdata</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>tessdata/**</include>
+                    <include>**/*.traineddata</include>
+                </includes>
             </resource>
         </resources>
         <plugins>

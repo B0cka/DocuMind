@@ -1,5 +1,7 @@
 package com.B0cka.DocuMind.service.vectorise;
 
+import com.B0cka.DocuMind.model.VideoChunk;
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -7,8 +9,7 @@ public interface VectoriseService {
 
     float[] callVectorizeServer(String str);
 
-    List<String> findSimilarChunks(float[] questionVector, int limit, String docId);
+    List<VideoChunk> findSimilarChunks(float[] questionVector, int limit, String docId);
 
-    void processChunks(List<String> chunks, String docId);
-
+    void saveChunks(List<VideoChunk> chunks);
 }

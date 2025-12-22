@@ -16,7 +16,6 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@PropertySource("application.properties")
 public class OpenRouterClient implements LlmClient {
 
     private final RestTemplate restTemplate;

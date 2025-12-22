@@ -11,14 +11,14 @@ import org.hibernate.type.SqlTypes;
 
 
 @Entity
-@Table(name = "video")
+@Table(name = "video_chunks")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Video {
+public class VideoChunk {
 
-    public Video(Long id, String link, String text, float[] vector) {
+    public VideoChunk(Long id, String link, String text, float[] vector) {
         this.id = id;
         this.link = link;
         this.text = text;
@@ -31,7 +31,7 @@ public class Video {
 
     @Column
     @JdbcTypeCode(SqlTypes.VECTOR)
-    @Array(length = 768)
+    @Array(length = 384)
     private float[] vector;
 
     @Column(columnDefinition = "TEXT")
@@ -39,4 +39,10 @@ public class Video {
 
     @Column(name = "link")
     private String link;
+
+    @Column(name = "start_time")
+    private double startTime;
+
+    @Column(name = "end_time")
+    private double endTime;
 }

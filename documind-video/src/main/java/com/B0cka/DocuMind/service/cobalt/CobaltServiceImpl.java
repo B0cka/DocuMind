@@ -19,7 +19,6 @@ import java.util.HashMap;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@PropertySource("application.properties")
 public class CobaltServiceImpl implements CobaltService {
 
     private final RestTemplate restTemplate;

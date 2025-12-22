@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@PropertySource(value = "application.properties")
 public class SearchService {
 
     @Value("${api.key}")

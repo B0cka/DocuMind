@@ -28,6 +28,13 @@
         </dependency>
 
     </dependencies>
+
+    <build>
+        <resources>
+            <!-- 1. Ресурсы, которые НУЖНО фильтровать (например, application.properties) -->
+            <!-- 2. Ресурсы, которые НЕЛЬЗЯ фильтровать (бинарники) -->
+        </resources>
+    </build>
     <properties>
         <maven.compiler.source>23</maven.compiler.source>
         <maven.compiler.target>23</maven.compiler.target>

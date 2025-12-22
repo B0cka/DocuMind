@@ -24,7 +24,6 @@ import java.util.*;
 
 @Slf4j
 @Service
-@PropertySource(value = "application.properties")
 public class PdfProcessingService {
     private final RestTemplate restTemplate;
 

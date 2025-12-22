@@ -16,10 +16,11 @@ import org.springframework.web.client.RestTemplate;
 import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@PropertySource("application.properties")
 public class WhisperServiceImpl implements WhisperService {
 
     private final RestTemplate restTemplate;
@@ -27,7 +28,7 @@ public class WhisperServiceImpl implements WhisperService {
     private String whisperUrl;
 
     @Override
-    public String transcribe(File audioFile) {
+    public List<WhisperSegment> transcribe(File audioFile) {
         log.info("Обработка файла: {} через Whisper", audioFile.getName());
 
         HttpHeaders headers = new HttpHeaders();
@@ -47,15 +48,10 @@ public class WhisperServiceImpl implements WhisperService {
         );
 
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-            log.error("Ошибка при обращении к Whisper: {}", response.getStatusCode());
-            throw new RuntimeException("Ошибка при расшифровке аудио");
+            throw new RuntimeException("Ошибка Whisper");
         }
 
-        WhisperResponse whisperResponse = response.getBody();
-        String result = whisperResponse.getText();
-
-        log.info("Whisper вернул {} сегментов", whisperResponse.getSegments().size());
-        return result;
+        return response.getBody().getSegments();
     }
 
 }

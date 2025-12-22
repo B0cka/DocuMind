@@ -1,106 +1,62 @@
 package com.B0cka.DocuMind.service.vectorise;
 
-import com.B0cka.DocuMind.model.Video;
+import com.B0cka.DocuMind.model.VideoChunk;
 import com.B0cka.DocuMind.repository.VideoRepository;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.*;
+import java.util.List;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@PropertySource("application.properties")
 public class VectoriseServiceImpl implements VectoriseService {
 
-    @Value("${vectorise.url}")
-    private String vectoriseUrl;
-    private final RestTemplate restTemplate;
     private final VideoRepository videoRepository;
+    private final EmbeddingModel embeddingModel;
 
     @Override
-    public float[] callVectorizeServer(String str){
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("text", str);
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> response = restTemplate.postForObject(
-                vectoriseUrl,
-                requestBody,
-                Map.class
-        );
-
-        if (response == null || !response.containsKey("vector")) {
-            throw new RuntimeException("Не удалось векторизовать вопрос");
-        }
-
-        List<Double> vectorList = (List<Double>) response.get("vector");
-        float[] questionVector = new float[vectorList.size()];
-        for (int i = 0; i < vectorList.size(); i++) {
-            questionVector[i] = vectorList.get(i).floatValue();
-        }
-
-        return questionVector;
+    public float[] callVectorizeServer(String text) {
+        return embeddingModel.embed(text).content().vector();
     }
 
     @Override
-    public List<String> findSimilarChunks(float[] questionVector, int limit, String docId) {
-        try {
-            log.info("Поиск по чанкам");
-            String vectorString = Arrays.toString(questionVector)
-                    .replace("[", "[")
-                    .replace("]", "]");
+    public List<VideoChunk> findSimilarChunks(float[] questionVector, int limit, String docId) {
 
-            log.info("QuestionVector = {}", vectorString);
-            List<Object[]> results = videoRepository.findSimilarVectors(vectorString, limit, docId);
+        String vectorStr = formatVectorToString(questionVector);
 
-            return results.stream()
-                    .filter(r -> r.length > 0 && r[0] != null)
-                    .map(r -> (String) r[0])
-                    .toList();
+        List<Object[]> rawResults = videoRepository.findSimilarChunksNative(vectorStr, limit, docId);
 
-        } catch (Exception e) {
-            log.error("Ошибка при поиске похожих чанков: {}", e.getMessage());
-            return Collections.emptyList();
-        }
+        return rawResults.stream()
+                .map(row -> VideoChunk.builder()
+                        .text((String) row[0])
+                        .startTime(((Number) row[1]).doubleValue())
+                        .endTime(((Number) row[2]).doubleValue())
+                        .link(docId)
+                        .build())
+                .toList();
     }
 
-    @Override
-    public void processChunks(List<String> chunks, String docId) {
-        for (String chunk : chunks) {
-            try {
-                Map<String, String> requestBody = Map.of("text", chunk);
 
-                Map<String, Object> response = restTemplate.postForObject(
-                        "http://localhost:8000/vectorize",
-                        requestBody,
-                        Map.class
-                );
-
-                if (response != null && response.containsKey("vector")) {
-                    List<Double> vectorList = (List<Double>) response.get("vector");
-                    float[] vectorArray = new float[vectorList.size()];
-                    for (int j = 0; j < vectorList.size(); j++) {
-                        vectorArray[j] = vectorList.get(j).floatValue();
-                    }
-
-                    Video vectorEntity = Video.builder()
-                            .vector(vectorArray)
-                            .link(docId)
-                            .text(chunk)
-                            .build();
-
-                    videoRepository.save(vectorEntity);
-                    log.info("Чанк сохранен: {}", chunk);
-                }
-            } catch (Exception e) {
-                log.error("Ошибка при обработке чанка {}: {}", chunk, e.getMessage());
+    private String formatVectorToString(float[] vector) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < vector.length; i++) {
+            sb.append(String.format(java.util.Locale.US, "%.8f", vector[i]));
+            if (i < vector.length - 1) {
+                sb.append(",");
             }
         }
+        sb.append("]");
+        return sb.toString();
     }
 
+    @Override
+    public void saveChunks(List<VideoChunk> chunks) {
+        for (VideoChunk c : chunks) {
+            log.info("сохранение чанка с id={}", c.getText());
+            videoRepository.save(c);
+        }
+    }
 }
