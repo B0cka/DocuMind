@@ -9,14 +9,10 @@ import com.B0cka.DocuMind.services.document.PdfProcessingService;
 import com.B0cka.DocuMind.services.search.SearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -31,38 +27,38 @@ public class WebServiceImpl implements WebService {
     @Override
     public void loadPDF(FrontRequest request, int group) {
         try {
+
             File txtFile = pdfProcessingService.convertPdfToTxtWithOCR(request.getFile());
             List<String> chunks = chunkService.chunkTxtFileByParagraphs(txtFile);
+
             vectorizationService.processChunks(chunks, request.getDocId());
 
-            log.info("Документ {} успешно загружен и обработан", request.getDocId());
+            log.info("Документ {} успешно загружен", request.getDocId());
         } catch (Exception e) {
-            log.error("Ошибка при загрузке PDF: {}", e.getMessage(), e);
+            log.error("Ошибка...", e);
             throw new RuntimeException("Не удалось загрузить PDF", e);
         }
     }
-
     @Override
     public String search(FrontSearchRequest request, int limit) {
-        List<String> keywords = searchService.analyzeQuestion(request.getQuestion());
-        List<String> relevantChunks = new ArrayList<>();
-        for(String s : keywords) {
-            float[] questionVector = vectorizationService.callVectorizeServer(s);
-            List<String> v = vectorizationService.findSimilarChunks(questionVector, limit, request.getDocId());
-            relevantChunks.addAll(v);
+        float[] questionVector = vectorizationService.callVectorizeServer(request.getQuestion());
+
+        List<String> relevantChunks = vectorizationService.findSimilarChunks(questionVector, limit, request.getDocId());
+
+        if (relevantChunks.isEmpty()) {
+            return "Я не нашел информации в этом документе.";
         }
+
         return searchService.search(relevantChunks, request.getQuestion());
     }
 
     @Override
     public String searchForAbstract(FrontSearchRequest request, int limit) {
-        List<String> keywords = searchService.analyzeQuestionForAbstract(request.getQuestion());
-        List<String> relevantChunks = new ArrayList<>();
+        float[] questionVector = vectorizationService.callVectorizeServer(request.getQuestion());
+        List<String> relevantChunks = vectorizationService.findSimilarChunks(questionVector, limit, request.getDocId());
 
-        for(String s : keywords) {
-            float[] questionVector = vectorizationService.callVectorizeServer(s);
-            List<String> v = vectorizationService.findSimilarChunks(questionVector, limit, request.getDocId());
-            relevantChunks.addAll(v);
+        if (relevantChunks.isEmpty()) {
+            return "Я не нашел информации в этом документе.";
         }
 
         return searchService.searchForAbstract(relevantChunks, request.getQuestion());

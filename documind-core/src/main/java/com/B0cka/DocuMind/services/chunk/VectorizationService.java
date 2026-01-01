@@ -1,100 +1,55 @@
 package com.B0cka.DocuMind.services.chunk;
 
-import com.B0cka.DocuMind.models.Vectors;
 import com.B0cka.DocuMind.reposiroty.WebRepository;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.time.Instant;
-import java.util.*;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class VectorizationService {
-    private final RestTemplate restTemplate;
+    private final EmbeddingModel embeddingModel;
     private final WebRepository webRepository;
 
     @Async
     public void processChunks(List<String> chunks, String docId) {
-        for (String chunk : chunks) {
+        log.info("Начинаем векторизацию {} чанков для дока {}", chunks.size(), docId);
+
+        for (String chunkText : chunks) {
             try {
-                Map<String, String> requestBody = Map.of("text", chunk);
+                log.info("Чанки для векторизации: {}", chunks);
+                float[] vector = embeddingModel.embed(chunkText).content().vector();
+                String vectorStr = formatVectorToString(vector);
 
-                Map<String, Object> response = restTemplate.postForObject(
-                        "http://localhost:8000/vectorize",
-                        requestBody,
-                        Map.class
-                );
-
-                if (response != null && response.containsKey("vector")) {
-                    List<Double> vectorList = (List<Double>) response.get("vector");
-                    float[] vectorArray = new float[vectorList.size()];
-                    for (int j = 0; j < vectorList.size(); j++) {
-                        vectorArray[j] = vectorList.get(j).floatValue();
-                    }
-
-                    Vectors vectorEntity = Vectors.builder()
-                            .vector(vectorArray)
-                            .docId(docId)
-                            .text(chunk)
-                            .createdAt(Instant.now())
-                            .build();
-
-                    webRepository.save(vectorEntity);   
-                    log.info("Чанк сохранен: {}", chunk);
-                }
+                webRepository.saveNative(docId, chunkText, vectorStr);
             } catch (Exception e) {
-                log.error("Ошибка при обработке чанка {}: {}", chunk, e.getMessage());
+                log.error("Ошибка сохранения чанка: {}", e.getMessage());
             }
         }
+        log.info("Документ {} обработан", docId);
     }
 
     public List<String> findSimilarChunks(float[] questionVector, int limit, String docId) {
-        try {
-
-            String vectorString = Arrays.toString(questionVector)
-                    .replace("[", "[")
-                    .replace("]", "]");
-
-            List<Object[]> results = webRepository.findSimilarVectors(vectorString, limit, docId);
-
-            return results.stream()
-                    .filter(r -> r.length > 0 && r[0] != null)
-                    .map(r -> (String) r[0])
-                    .toList();
-
-        } catch (Exception e) {
-            log.error("Ошибка при поиске похожих чанков: {}", e.getMessage());
-            return Collections.emptyList();
-        }
+        String vectorStr = formatVectorToString(questionVector);
+        return webRepository.findSimilar(vectorStr, limit, docId);
     }
 
-    public float[] callVectorizeServer(String str){
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("text", str);
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> response = restTemplate.postForObject(
-                "http://localhost:8000/vectorize",
-                requestBody,
-                Map.class
-        );
-
-        if (response == null || !response.containsKey("vector")) {
-            throw new RuntimeException("Не удалось векторизовать вопрос");
-        }
-
-        List<Double> vectorList = (List<Double>) response.get("vector");
-        float[] questionVector = new float[vectorList.size()];
-        for (int i = 0; i < vectorList.size(); i++) {
-            questionVector[i] = vectorList.get(i).floatValue();
-        }
-
-        return questionVector;
+    public float[] callVectorizeServer(String text) {
+        return embeddingModel.embed(text).content().vector();
     }
 
+    private String formatVectorToString(float[] vector) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < vector.length; i++) {
+            sb.append(String.format(java.util.Locale.US, "%.8f", vector[i]));
+            if (i < vector.length - 1) sb.append(",");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
 }

@@ -13,7 +13,7 @@ public interface VideoRepository extends JpaRepository<VideoChunk, Long> {
 
     @Query(value = "SELECT v.text, v.start_time, v.end_time " +
             "FROM video_chunks v " +
-            "WHERE v.link = :link " + // Оставляем LIKE для безопасности с /
+            "WHERE v.link = :link " +
             "ORDER BY v.vector <=> CAST(:vector AS vector) " +
             "LIMIT :limit", nativeQuery = true)
     List<Object[]> findSimilarChunksNative(@Param("vector") String vectorStr,

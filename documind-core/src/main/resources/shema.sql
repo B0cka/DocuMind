@@ -2,21 +2,12 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 DROP TABLE IF EXISTS video_chunks CASCADE;
 DROP TABLE IF EXISTS vectors CASCADE;
-DROP TABLE IF EXISTS documents CASCADE;
 
-CREATE TABLE IF NOT EXISTS documents (
-    id VARCHAR(255) PRIMARY KEY,
-    filename VARCHAR(255),
-    original_filename VARCHAR(255),
-    file_size BIGINT,
-    total_chunks INTEGER,
-    uploaded_at TIMESTAMP
-);
 CREATE TABLE IF NOT EXISTS vectors (
     id BIGSERIAL PRIMARY KEY,
     vector vector(384) NOT NULL,
     text TEXT NOT NULL,
-    doc_id VARCHAR(255) REFERENCES documents(id)
+    doc_id VARCHAR(255)
 );
 
 CREATE TABLE video_chunks (

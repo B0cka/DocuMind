@@ -45,7 +45,23 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <artifactId>spring-boot-starter-data-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j</artifactId>
+            <version>0.31.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-embeddings-all-minilm-l6-v2-q</artifactId>
+            <version>0.31.0</version>
         </dependency>
 
         <!-- PDF -->
@@ -79,7 +95,6 @@
 
     <build>
         <resources>
-            <!-- 2. Ресурсы, которые НЕЛЬЗЯ фильтровать (бинарники) -->
             <resource>
                 <directory>src/main/resources/tessdata</directory>
                 <filtering>false</filtering>
