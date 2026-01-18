@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>DocuMind – поиск и конспект по видео</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-alt: #111827;
+            --accent: #3b82f6;
+            --accent-soft: rgba(59, 130, 246, 0.15);
+            --text: #e5e7eb;
+            --text-soft: #9ca3af;
+            --border: #1f2937;
+            --error: #f97373;
+            --success: #4ade80;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 32px 16px;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-soft);
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 20px 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .card-desc {
+            font-size: 13px;
+            color: var(--text-soft);
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: var(--text-soft);
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #020617;
+            color: var(--text);
+            padding: 10px 12px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent-soft);
+            background: #020617;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .row > * {
+            flex: 1;
+        }
+
+        button {
+            border-radius: 10px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            font-weight: 500;
+            font-size: 14px;
+            padding: 10px 18px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.15s, transform 0.05s, box-shadow 0.15s;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: #2563eb;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        button[disabled] {
+            opacity: 0.6;
+            cursor: default;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 8px;
+            font-size: 13px;
+            min-height: 18px;
+        }
+
+        .status span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status--ok {
+            color: var(--success);
+        }
+
+        .status--error {
+            color: var(--error);
+        }
+
+        .status--loading {
+            color: var(--text-soft);
+        }
+
+        .answer-box, .summary-box {
+            margin-top: 10px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #020617;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .summary-items {
+            margin-top: 8px;
+        }
+
+        .summary-item {
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+        }
+
+        .summary-item-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .summary-title {
+            font-weight: 500;
+        }
+
+        .time-range {
+            color: var(--text-soft);
+            font-size: 12px;
+        }
+
+        .bullets {
+            margin-left: 16px;
+            margin-top: 4px;
+        }
+
+        .bullets li {
+            margin-bottom: 2px;
+        }
+
+        .tag {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            border: 1px solid rgba(37, 99, 235, 0.5);
+        }
+
+        @media (max-width: 640px) {
+            .row {
+                flex-direction: column;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header style="margin-bottom: 24px;">
+        <h1>DocuMind</h1>
+        <div class="subtitle">
+            Индексация YouTube‑видео, поиск по содержимому и автоматический конспект.
+        </div>
+    </header>
+
+    <!-- 1. Загрузка / индексация -->
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">1. Загрузка и индексация видео</div>
+                <div class="card-desc">Укажи ссылку на видео. Бэкенд скачает звук, прогонит через Whisper и сохранит семантические чанки в БД.</div>
+            </div>
+            <span class="tag">/video/load-link</span>
+        </div>
+
+        <form id="loadForm">
+            <label for="videoLink">Ссылка на видео</label>
+            <div class="row">
+                <input type="text" id="videoLink" placeholder="https://www.youtube.com/watch?v=..." required />
+                <button type="submit" id="loadBtn">Проиндексировать</button>
+            </div>
+        </form>
+
+        <div class="status" id="loadStatus"></div>
+    </section>
+
+    <!-- 2. Поиск по видео -->
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">2. Поиск по содержимому</div>
+                <div class="card-desc">Задай вопрос, ответ будет найден по эмбеддингам и сгенерирован LLM.</div>
+            </div>
+            <span class="tag">/video/search-video</span>
+        </div>
+
+        <form id="searchForm">
+            <label for="question">Вопрос к видео</label>
+            <textarea id="question" placeholder="Например: 'в чем основная идея доклада?' или 'как автор объясняет X?'" required></textarea>
+            <div class="row" style="margin-top: 10px;">
+                <button type="submit" id="askBtn">Спросить у видео</button>
+            </div>
+        </form>
+
+        <div class="status" id="searchStatus"></div>
+        <div class="answer-box" id="answerBox" style="display:none;"></div>
+    </section>
+
+    <!-- 3. Конспект -->
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">3. Конспект видео</div>
+                <div class="card-desc">Сделать структурированный конспект со списком смысловых блоков и таймкодами.</div>
+            </div>
+            <span class="tag">/video/summarize</span>
+        </div>
+
+        <div class="row">
+            <button id="summaryBtn">Сделать конспект</button>
+        </div>
+
+        <div class="status" id="summaryStatus"></div>
+
+        <div class="summary-box" id="summaryBox" style="display:none;">
+            <div id="overallSummary" style="margin-bottom: 8px;"></div>
+            <div class="summary-items" id="summaryItems"></div>
+        </div>
+    </section>
+</div>
+
+<script>
+    const backendBaseUrl = "http://localhost:8080"; // при необходимости поменяй
+
+    function setStatus(el, type, text) {
+        el.className = "status";
+        if (!text) {
+            el.textContent = "";
+            return;
+        }
+        if (type === "ok") el.classList.add("status--ok");
+        if (type === "error") el.classList.add("status--error");
+        if (type === "loading") el.classList.add("status--loading");
+        el.innerHTML = "<span>" + text + "</span>";
+    }
+
+    async function postJson(path, body) {
+        const res = await fetch(backendBaseUrl + path, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        });
+        const text = await res.text();
+        let data = null;
+        try {
+            data = JSON.parse(text);
+        } catch (_) {
+            // если не JSON, вернем как текст
+        }
+        if (!res.ok) {
+            throw new Error(data && data.message ? data.message : text || res.statusText);
+        }
+        return data !== null ? data : text;
+    }
+
+    // 1. Загрузка / индексация
+    const loadForm = document.getElementById("loadForm");
+    const loadBtn = document.getElementById("loadBtn");
+    const loadStatus = document.getElementById("loadStatus");
+    const videoLinkInput = document.getElementById("videoLink");
+
+    loadForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const link = videoLinkInput.value.trim();
+        if (!link) return;
+
+        loadBtn.disabled = true;
+        setStatus(loadStatus, "loading", "Индексация запущена. Это может занять несколько минут (скачивание, распознавание речи, разбиение на чанки)...");
+
+        try {
+            const resp = await postJson("/video/load-link", { link });
+            setStatus(loadStatus, "ok", typeof resp === "string" ? resp : "Видео успешно проиндексировано.");
+        } catch (err) {
+            console.error(err);
+            setStatus(loadStatus, "error", "Ошибка при индексации: " + err.message);
+        } finally {
+            loadBtn.disabled = false;
+        }
+    });
+
+    // 2. Поиск по видео
+    const searchForm = document.getElementById("searchForm");
+    const askBtn = document.getElementById("askBtn");
+    const searchStatus = document.getElementById("searchStatus");
+    const questionInput = document.getElementById("question");
+    const answerBox = document.getElementById("answerBox");
+
+    searchForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const link = videoLinkInput.value.trim();
+        const question = questionInput.value.trim();
+        if (!link) {
+            setStatus(searchStatus, "error", "Сначала укажи ссылку на видео (сверху).");
+            return;
+        }
+        if (!question) return;
+
+        askBtn.disabled = true;
+        answerBox.style.display = "none";
+        setStatus(searchStatus, "loading", "Ищу ответ в видео...");
+
+        try {
+            const resp = await postJson("/video/search-video", { link, question });
+            const answer = typeof resp === "string" ? resp : JSON.stringify(resp, null, 2);
+            answerBox.textContent = answer;
+            answerBox.style.display = "block";
+            setStatus(searchStatus, "ok", "Ответ получен.");
+        } catch (err) {
+            console.error(err);
+            setStatus(searchStatus, "error", "Ошибка при поиске: " + err.message);
+        } finally {
+            askBtn.disabled = false;
+        }
+    });
+
+    // 3. Конспект
+    const summaryBtn = document.getElementById("summaryBtn");
+    const summaryStatus = document.getElementById("summaryStatus");
+    const summaryBox = document.getElementById("summaryBox");
+    const overallSummaryEl = document.getElementById("overallSummary");
+    const summaryItemsEl = document.getElementById("summaryItems");
+
+    function formatTime(seconds) {
+        const s = Math.floor(seconds);
+        const m = Math.floor(s / 60);
+        const ss = s % 60;
+        return `${m.toString().padStart(2, "0")}:${ss.toString().padStart(2, "0")}`;
+    }
+
+    summaryBtn.addEventListener("click", async () => {
+        const link = videoLinkInput.value.trim();
+        if (!link) {
+            setStatus(summaryStatus, "error", "Сначала укажи ссылку на видео (сверху).");
+            return;
+        }
+
+        summaryBtn.disabled = true;
+        summaryBox.style.display = "none";
+        setStatus(summaryStatus, "loading", "Строю конспект по всем чанкам видео...");
+
+        try {
+            const resp = await postJson("/video/summarize", { link });
+            // ожидаем структуру VideoSummaryResponseDto
+            overallSummaryEl.textContent = resp.overallSummary || "";
+            summaryItemsEl.innerHTML = "";
+
+            if (Array.isArray(resp.items)) {
+                resp.items.forEach((item) => {
+                    const div = document.createElement("div");
+                    div.className = "summary-item";
+
+                    const header = document.createElement("div");
+                    header.className = "summary-item-header";
+
+                    const title = document.createElement("div");
+                    title.className = "summary-title";
+                    title.textContent = item.title || "Без названия";
+
+                    const time = document.createElement("div");
+                    time.className = "time-range";
+                    const st = typeof item.startTime === "number" ? formatTime(item.startTime) : "?";
+                    const et = typeof item.endTime === "number" ? formatTime(item.endTime) : "?";
+                    time.textContent = `${st} – ${et}`;
+
+                    header.appendChild(title);
+                    header.appendChild(time);
+                    div.appendChild(header);
+
+                    if (Array.isArray(item.bullets) && item.bullets.length > 0) {
+                        const ul = document.createElement("ul");
+                        ul.className = "bullets";
+                        item.bullets.forEach((b) => {
+                            const li = document.createElement("li");
+                            li.textContent = b;
+                            ul.appendChild(li);
+                        });
+                        div.appendChild(ul);
+                    }
+
+                    summaryItemsEl.appendChild(div);
+                });
+            }
+
+            summaryBox.style.display = "block";
+            setStatus(summaryStatus, "ok", "Конспект готов.");
+        } catch (err) {
+            console.error(err);
+            setStatus(summaryStatus, "error", "Ошибка при построении конспекта: " + err.message);
+        } finally {
+            summaryBtn.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>

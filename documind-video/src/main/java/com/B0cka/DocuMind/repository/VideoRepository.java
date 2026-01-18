@@ -19,4 +19,6 @@ public interface VideoRepository extends JpaRepository<VideoChunk, Long> {
     List<Object[]> findSimilarChunksNative(@Param("vector") String vectorStr,
                                            @Param("limit") int limit,
                                            @Param("link") String link);
+
+    List<VideoChunk> findByLinkOrderByStartTimeAsc(String link);
 }
