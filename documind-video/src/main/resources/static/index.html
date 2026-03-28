@@ -3,134 +3,324 @@
 <head>
     <meta charset="UTF-8" />
     <title>DocuMind – поиск и конспект по видео</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0f172a;
-            --bg-alt: #111827;
-            --accent: #3b82f6;
-            --accent-soft: rgba(59, 130, 246, 0.15);
-            --text: #e5e7eb;
-            --text-soft: #9ca3af;
-            --border: #1f2937;
-            --error: #f97373;
-            --success: #4ade80;
+            --bg: #EFEDE3;
+            --bg-warm: #E8E6DA;
+            --bg-card: #FAFAF6;
+            --dark: #302F2C;
+            --dark-soft: #4A4845;
+            --dark-muted: #6B6966;
+            --accent: #C17F59;
+            --accent-hover: #A66B47;
+            --accent-soft: rgba(193, 127, 89, 0.12);
+            --accent-glow: rgba(193, 127, 89, 0.25);
+            --border: #D8D5C9;
+            --border-light: #E5E3D9;
+            --success: #6B8E5E;
+            --success-bg: #EEF4EB;
+            --error: #C45C5C;
+            --error-bg: #F9EFEF;
+            --shadow: 0 4px 20px rgba(48, 47, 44, 0.08);
+            --shadow-lg: 0 12px 40px rgba(48, 47, 44, 0.12);
+            --shadow-accent: 0 8px 30px rgba(193, 127, 89, 0.2);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
         body {
-            background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
-            color: var(--text);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--dark);
             min-height: 100vh;
-            padding: 32px 16px;
+            padding: 50px 24px;
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        /* Декоративный фон */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -20%;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(193, 127, 89, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -30%;
+            left: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(48, 47, 44, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
         }
 
         .container {
-            max-width: 960px;
+            max-width: 920px;
             margin: 0 auto;
         }
 
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--dark);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        .logo-icon svg {
+            width: 32px;
+            height: 32px;
+            color: var(--bg);
+            position: relative;
+            z-index: 1;
+        }
+
         h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--dark);
+            letter-spacing: -1px;
         }
 
         .subtitle {
-            color: var(--text-soft);
-            margin-bottom: 32px;
+            color: var(--dark-muted);
+            font-size: 18px;
+            max-width: 520px;
+            margin: 0 auto;
+            line-height: 1.6;
         }
 
+        /* Decorative line */
+        .divider {
+            width: 60px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 2px;
+            margin: 24px auto 0;
+        }
+
+        /* Cards */
         .card {
-            background: rgba(15, 23, 42, 0.9);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            padding: 20px 24px;
-            margin-bottom: 16px;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+            background: var(--bg-card);
+            border-radius: 24px;
+            border: 1px solid var(--border-light);
+            padding: 32px 36px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--dark) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .card:hover::before {
+            opacity: 1;
         }
 
         .card-header {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
-            margin-bottom: 12px;
+            margin-bottom: 24px;
+            gap: 20px;
+        }
+
+        .card-header-content {
+            display: flex;
+            gap: 18px;
+            align-items: flex-start;
+        }
+
+        .card-number {
+            width: 44px;
+            height: 44px;
+            background: var(--dark);
+            color: var(--bg);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(48, 47, 44, 0.2);
         }
 
         .card-title {
-            font-size: 18px;
+            font-size: 22px;
             font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
         }
 
         .card-desc {
-            font-size: 13px;
-            color: var(--text-soft);
+            font-size: 15px;
+            color: var(--dark-muted);
+            line-height: 1.6;
         }
 
+        /* Tag */
+        .tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 10px;
+            background: var(--bg-warm);
+            color: var(--dark-soft);
+            white-space: nowrap;
+            border: 1px solid var(--border);
+        }
+
+        /* Form elements */
         label {
             display: block;
-            font-size: 13px;
-            margin-bottom: 4px;
-            color: var(--text-soft);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         input[type="text"], textarea {
             width: 100%;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: #020617;
-            color: var(--text);
-            padding: 10px 12px;
-            font-size: 14px;
+            border-radius: 14px;
+            border: 2px solid var(--border);
+            background: var(--bg);
+            color: var(--dark);
+            padding: 16px 20px;
+            font-size: 16px;
+            font-family: inherit;
             outline: none;
-            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+            transition: all 0.2s ease;
+        }
+
+        input[type="text"]::placeholder, textarea::placeholder {
+            color: var(--dark-muted);
+        }
+
+        input[type="text"]:hover, textarea:hover {
+            border-color: var(--dark-muted);
         }
 
         input[type="text"]:focus, textarea:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 1px var(--accent-soft);
-            background: #020617;
+            background: var(--bg-card);
+            box-shadow: 0 0 0 4px var(--accent-soft);
         }
 
         textarea {
             resize: vertical;
-            min-height: 80px;
+            min-height: 130px;
+            line-height: 1.6;
         }
 
         .row {
             display: flex;
-            gap: 10px;
-            margin-top: 8px;
+            gap: 14px;
+            margin-top: 14px;
         }
 
-        .row > * {
+        .row > input {
             flex: 1;
         }
 
+        /* Buttons */
         button {
-            border-radius: 10px;
+            border-radius: 14px;
             border: none;
             background: var(--accent);
             color: white;
-            font-weight: 500;
-            font-size: 14px;
-            padding: 10px 18px;
+            font-weight: 600;
+            font-size: 16px;
+            padding: 16px 28px;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            transition: background 0.15s, transform 0.05s, box-shadow 0.15s;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s ease;
             white-space: nowrap;
+            font-family: inherit;
+        }
+
+        button svg {
+            width: 20px;
+            height: 20px;
         }
 
         button:hover {
-            background: #2563eb;
-            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
-            transform: translateY(-1px);
+            background: var(--accent-hover);
+            box-shadow: var(--shadow-accent);
+            transform: translateY(-2px);
         }
 
         button:active {
@@ -139,119 +329,300 @@
         }
 
         button[disabled] {
-            opacity: 0.6;
-            cursor: default;
-            box-shadow: none;
+            opacity: 0.5;
+            cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
 
+        /* Secondary button style */
+        .btn-dark {
+            background: var(--dark);
+        }
+
+        .btn-dark:hover {
+            background: var(--dark-soft);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Status */
         .status {
-            margin-top: 8px;
-            font-size: 13px;
-            min-height: 18px;
+            margin-top: 16px;
+            font-size: 15px;
+            min-height: 24px;
         }
 
         .status span {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-        }
-
-        .status--ok {
-            color: var(--success);
-        }
-
-        .status--error {
-            color: var(--error);
-        }
-
-        .status--loading {
-            color: var(--text-soft);
-        }
-
-        .answer-box, .summary-box {
-            margin-top: 10px;
-            padding: 12px 14px;
+            gap: 8px;
+            padding: 10px 18px;
             border-radius: 12px;
-            background: #020617;
-            border: 1px solid var(--border);
-            font-size: 14px;
-            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .status--ok span {
+            color: var(--success);
+            background: var(--success-bg);
+        }
+
+        .status--error span {
+            color: var(--error);
+            background: var(--error-bg);
+        }
+
+        .status--loading span {
+            color: var(--dark-muted);
+            background: var(--bg-warm);
+        }
+
+        .status--loading span::before {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Answer box */
+        .answer-box, .summary-box {
+            margin-top: 20px;
+            padding: 24px;
+            border-radius: 16px;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            font-size: 16px;
+            line-height: 1.8;
             white-space: pre-wrap;
         }
 
+        /* Summary items */
         .summary-items {
-            margin-top: 8px;
+            margin-top: 16px;
         }
 
         .summary-item {
-            border-radius: 10px;
-            padding: 10px 12px;
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid var(--border);
-            margin-bottom: 8px;
+            border-radius: 16px;
+            padding: 20px 24px;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .summary-item:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 16px var(--accent-soft);
         }
 
         .summary-item-header {
             display: flex;
             justify-content: space-between;
-            font-size: 13px;
-            margin-bottom: 4px;
+            align-items: center;
+            margin-bottom: 12px;
         }
 
         .summary-title {
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 17px;
+            color: var(--dark);
         }
 
         .time-range {
-            color: var(--text-soft);
-            font-size: 12px;
+            color: var(--bg);
+            background: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 8px;
         }
 
         .bullets {
-            margin-left: 16px;
-            margin-top: 4px;
+            margin-left: 20px;
+            margin-top: 10px;
+            color: var(--dark-soft);
         }
 
         .bullets li {
-            margin-bottom: 2px;
+            margin-bottom: 6px;
+            font-size: 15px;
+            line-height: 1.6;
         }
 
-        .tag {
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 999px;
-            background: var(--accent-soft);
+        .bullets li::marker {
             color: var(--accent);
-            border: 1px solid rgba(37, 99, 235, 0.5);
         }
 
-        @media (max-width: 640px) {
+        /* Overall summary */
+        #overallSummary {
+            font-weight: 500;
+            font-size: 17px;
+            color: var(--dark);
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+            line-height: 1.7;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 56px;
+            padding-top: 32px;
+            border-top: 2px solid var(--border);
+            color: var(--dark-muted);
+            font-size: 14px;
+        }
+
+        .footer-brand {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Feature badges */
+        .features {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+        }
+
+        .feature {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 14px;
+            color: var(--dark-soft);
+            box-shadow: var(--shadow);
+        }
+
+        .feature svg {
+            width: 18px;
+            height: 18px;
+            color: var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            body {
+                padding: 32px 16px;
+            }
+
+            .card {
+                padding: 24px 20px;
+                border-radius: 20px;
+            }
+
+            .card-header {
+                flex-direction: column;
+                gap: 16px;
+            }
+
             .row {
                 flex-direction: column;
             }
 
             h1 {
-                font-size: 22px;
+                font-size: 32px;
+            }
+
+            .subtitle {
+                font-size: 16px;
+            }
+
+            .features {
+                gap: 8px;
+            }
+
+            .feature {
+                padding: 8px 14px;
+                font-size: 13px;
             }
         }
+
+        /* Animations */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        header {
+            animation: fadeUp 0.6s ease forwards;
+        }
+
+        .card {
+            opacity: 0;
+            animation: fadeUp 0.6s ease forwards;
+        }
+
+        .card:nth-of-type(1) { animation-delay: 0.15s; }
+        .card:nth-of-type(2) { animation-delay: 0.3s; }
+        .card:nth-of-type(3) { animation-delay: 0.45s; }
     </style>
 </head>
 <body>
 <div class="container">
-    <header style="margin-bottom: 24px;">
-        <h1>DocuMind</h1>
-        <div class="subtitle">
-            Индексация YouTube‑видео, поиск по содержимому и автоматический конспект.
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <h1>DocuMind</h1>
+        </div>
+        <p class="subtitle">
+            Умный инструмент для работы с видео: индексация, семантический поиск и автоматическое создание конспектов
+        </p>
+        <div class="divider"></div>
+
+        <div class="features">
+            <div class="feature">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+                Whisper AI
+            </div>
+            <div class="feature">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                Embeddings
+            </div>
+            <div class="feature">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                LLM-ответы
+            </div>
         </div>
     </header>
 
     <!-- 1. Загрузка / индексация -->
     <section class="card">
         <div class="card-header">
-            <div>
-                <div class="card-title">1. Загрузка и индексация видео</div>
-                <div class="card-desc">Укажи ссылку на видео. Бэкенд скачает звук, прогонит через Whisper и сохранит семантические чанки в БД.</div>
+            <div class="card-header-content">
+                <div class="card-number">1</div>
+                <div>
+                    <div class="card-title">Загрузка и индексация</div>
+                    <div class="card-desc">Вставьте ссылку на YouTube-видео. Система извлечёт аудио, распознает речь и создаст семантические фрагменты для поиска.</div>
+                </div>
             </div>
             <span class="tag">/video/load-link</span>
         </div>
@@ -260,7 +631,12 @@
             <label for="videoLink">Ссылка на видео</label>
             <div class="row">
                 <input type="text" id="videoLink" placeholder="https://www.youtube.com/watch?v=..." required />
-                <button type="submit" id="loadBtn">Проиндексировать</button>
+                <button type="submit" id="loadBtn" class="btn-dark">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    Загрузить
+                </button>
             </div>
         </form>
 
@@ -270,18 +646,26 @@
     <!-- 2. Поиск по видео -->
     <section class="card">
         <div class="card-header">
-            <div>
-                <div class="card-title">2. Поиск по содержимому</div>
-                <div class="card-desc">Задай вопрос, ответ будет найден по эмбеддингам и сгенерирован LLM.</div>
+            <div class="card-header-content">
+                <div class="card-number">2</div>
+                <div>
+                    <div class="card-title">Умный поиск</div>
+                    <div class="card-desc">Задайте вопрос на естественном языке — система найдёт релевантные фрагменты и сформирует ответ.</div>
+                </div>
             </div>
             <span class="tag">/video/search-video</span>
         </div>
 
         <form id="searchForm">
-            <label for="question">Вопрос к видео</label>
-            <textarea id="question" placeholder="Например: 'в чем основная идея доклада?' или 'как автор объясняет X?'" required></textarea>
-            <div class="row" style="margin-top: 10px;">
-                <button type="submit" id="askBtn">Спросить у видео</button>
+            <label for="question">Ваш вопрос</label>
+            <textarea id="question" placeholder="Например: «Какие ключевые идеи обсуждаются в видео?» или «Что автор говорит о...»" required></textarea>
+            <div class="row" style="margin-top: 16px;">
+                <button type="submit" id="askBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Найти ответ
+                </button>
             </div>
         </form>
 
@@ -292,28 +676,40 @@
     <!-- 3. Конспект -->
     <section class="card">
         <div class="card-header">
-            <div>
-                <div class="card-title">3. Конспект видео</div>
-                <div class="card-desc">Сделать структурированный конспект со списком смысловых блоков и таймкодами.</div>
+            <div class="card-header-content">
+                <div class="card-number">3</div>
+                <div>
+                    <div class="card-title">Автоконспект</div>
+                    <div class="card-desc">Создайте структурированный конспект видео с разбивкой на смысловые блоки и таймкодами.</div>
+                </div>
             </div>
             <span class="tag">/video/summarize</span>
         </div>
 
         <div class="row">
-            <button id="summaryBtn">Сделать конспект</button>
+            <button id="summaryBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Создать конспект
+            </button>
         </div>
 
         <div class="status" id="summaryStatus"></div>
 
         <div class="summary-box" id="summaryBox" style="display:none;">
-            <div id="overallSummary" style="margin-bottom: 8px;"></div>
+            <div id="overallSummary"></div>
             <div class="summary-items" id="summaryItems"></div>
         </div>
     </section>
+
+    <footer class="footer">
+        <span class="footer-brand">DocuMind</span> · Интеллектуальная обработка видеоконтента
+    </footer>
 </div>
 
 <script>
-    const backendBaseUrl = ""; // при необходимости поменяй
+    const backendBaseUrl = "";
 
     function setStatus(el, type, text) {
         el.className = "status";
@@ -339,9 +735,7 @@
         let data = null;
         try {
             data = JSON.parse(text);
-        } catch (_) {
-            // если не JSON, вернем как текст
-        }
+        } catch (_) {}
         if (!res.ok) {
             throw new Error(data && data.message ? data.message : text || res.statusText);
         }
@@ -360,14 +754,14 @@
         if (!link) return;
 
         loadBtn.disabled = true;
-        setStatus(loadStatus, "loading", "Индексация запущена. Это может занять несколько минут (скачивание, распознавание речи, разбиение на чанки)...");
+        setStatus(loadStatus, "loading", "Индексация запущена — это может занять несколько минут...");
 
         try {
             const resp = await postJson("/video/load-link", { link });
-            setStatus(loadStatus, "ok", typeof resp === "string" ? resp : "Видео успешно проиндексировано.");
+            setStatus(loadStatus, "ok", "✓ " + (typeof resp === "string" ? resp : "Видео успешно проиндексировано"));
         } catch (err) {
             console.error(err);
-            setStatus(loadStatus, "error", "Ошибка при индексации: " + err.message);
+            setStatus(loadStatus, "error", "Ошибка: " + err.message);
         } finally {
             loadBtn.disabled = false;
         }
@@ -385,24 +779,24 @@
         const link = videoLinkInput.value.trim();
         const question = questionInput.value.trim();
         if (!link) {
-            setStatus(searchStatus, "error", "Сначала укажи ссылку на видео (сверху).");
+            setStatus(searchStatus, "error", "Сначала укажите ссылку на видео в первом блоке");
             return;
         }
         if (!question) return;
 
         askBtn.disabled = true;
         answerBox.style.display = "none";
-        setStatus(searchStatus, "loading", "Ищу ответ в видео...");
+        setStatus(searchStatus, "loading", "Ищу ответ в содержимом видео...");
 
         try {
             const resp = await postJson("/video/search-video", { link, question });
             const answer = typeof resp === "string" ? resp : JSON.stringify(resp, null, 2);
             answerBox.textContent = answer;
             answerBox.style.display = "block";
-            setStatus(searchStatus, "ok", "Ответ получен.");
+            setStatus(searchStatus, "ok", "✓ Ответ найден");
         } catch (err) {
             console.error(err);
-            setStatus(searchStatus, "error", "Ошибка при поиске: " + err.message);
+            setStatus(searchStatus, "error", "Ошибка: " + err.message);
         } finally {
             askBtn.disabled = false;
         }
@@ -425,17 +819,16 @@
     summaryBtn.addEventListener("click", async () => {
         const link = videoLinkInput.value.trim();
         if (!link) {
-            setStatus(summaryStatus, "error", "Сначала укажи ссылку на видео (сверху).");
+            setStatus(summaryStatus, "error", "Сначала укажите ссылку на видео в первом блоке");
             return;
         }
 
         summaryBtn.disabled = true;
         summaryBox.style.display = "none";
-        setStatus(summaryStatus, "loading", "Строю конспект по всем чанкам видео...");
+        setStatus(summaryStatus, "loading", "Формирую структурированный конспект...");
 
         try {
             const resp = await postJson("/video/summarize", { link });
-            // ожидаем структуру VideoSummaryResponseDto
             overallSummaryEl.textContent = resp.overallSummary || "";
             summaryItemsEl.innerHTML = "";
 
@@ -477,10 +870,10 @@
             }
 
             summaryBox.style.display = "block";
-            setStatus(summaryStatus, "ok", "Конспект готов.");
+            setStatus(summaryStatus, "ok", "✓ Конспект готов");
         } catch (err) {
             console.error(err);
-            setStatus(summaryStatus, "error", "Ошибка при построении конспекта: " + err.message);
+            setStatus(summaryStatus, "error", "Ошибка: " + err.message);
         } finally {
             summaryBtn.disabled = false;
         }
