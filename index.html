@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
+        /* ... весь CSS без изменений ... */
         :root {
             --bg: #EFEDE3;
             --bg-warm: #E8E6DA;
@@ -45,7 +46,6 @@
             font-size: 16px;
         }
 
-        /* Декоративный фон */
         body::before {
             content: '';
             position: fixed;
@@ -75,7 +75,6 @@
             margin: 0 auto;
         }
 
-        /* Header */
         header {
             text-align: center;
             margin-bottom: 56px;
@@ -140,7 +139,6 @@
             line-height: 1.6;
         }
 
-        /* Decorative line */
         .divider {
             width: 60px;
             height: 4px;
@@ -149,7 +147,6 @@
             margin: 24px auto 0;
         }
 
-        /* Cards */
         .card {
             background: var(--bg-card);
             border-radius: 24px;
@@ -226,7 +223,6 @@
             line-height: 1.6;
         }
 
-        /* Tag */
         .tag {
             font-family: 'JetBrains Mono', monospace;
             font-size: 12px;
@@ -239,7 +235,6 @@
             border: 1px solid var(--border);
         }
 
-        /* Form elements */
         label {
             display: block;
             font-size: 14px;
@@ -293,7 +288,6 @@
             flex: 1;
         }
 
-        /* Buttons */
         button {
             border-radius: 14px;
             border: none;
@@ -335,7 +329,6 @@
             box-shadow: none;
         }
 
-        /* Secondary button style */
         .btn-dark {
             background: var(--dark);
         }
@@ -345,7 +338,6 @@
             box-shadow: var(--shadow-lg);
         }
 
-        /* Status */
         .status {
             margin-top: 16px;
             font-size: 15px;
@@ -390,7 +382,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Answer box */
         .answer-box, .summary-box {
             margin-top: 20px;
             padding: 24px;
@@ -402,7 +393,6 @@
             white-space: pre-wrap;
         }
 
-        /* Summary items */
         .summary-items {
             margin-top: 16px;
         }
@@ -459,7 +449,6 @@
             color: var(--accent);
         }
 
-        /* Overall summary */
         #overallSummary {
             font-weight: 500;
             font-size: 17px;
@@ -469,7 +458,6 @@
             line-height: 1.7;
         }
 
-        /* Footer */
         .footer {
             text-align: center;
             margin-top: 56px;
@@ -484,7 +472,6 @@
             color: var(--dark);
         }
 
-        /* Feature badges */
         .features {
             display: flex;
             justify-content: center;
@@ -512,7 +499,6 @@
             color: var(--accent);
         }
 
-        /* Responsive */
         @media (max-width: 700px) {
             body {
                 padding: 32px 16px;
@@ -550,7 +536,6 @@
             }
         }
 
-        /* Animations */
         @keyframes fadeUp {
             from {
                 opacity: 0;
@@ -709,7 +694,8 @@
 </div>
 
 <script>
-    const backendBaseUrl = "";
+    // ⬇️ ВАЖНО: укажите адрес вашего Spring Boot бэкенда
+    const backendBaseUrl = "http://localhost:9190";
 
     function setStatus(el, type, text) {
         el.className = "status";

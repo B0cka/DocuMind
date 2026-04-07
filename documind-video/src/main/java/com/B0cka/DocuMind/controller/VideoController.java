@@ -15,7 +15,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/video")
 @Slf4j
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://127.0.0.1:5050"})
+@CrossOrigin(origins = {
+        "http://localhost:5050",
+        "http://127.0.0.1:5050"
+}, allowCredentials = "true")
 public class VideoController {
 
     private final VideoService videoService;
@@ -31,10 +34,9 @@ public class VideoController {
 
     @PostMapping("/search-video")
     public ResponseEntity<String> searchFromVideo(@RequestBody SearchRequestDto dto){
-        log.info("Получен запрос на трансформацию видео: {}", dto.getLink());
+        log.info("Получе�� запрос на поиск по видео: {}", dto.getLink());
 
         return ResponseEntity.ok().body(videoService.searchVideo(dto));
-
     }
 
     @PostMapping("/summarize")
